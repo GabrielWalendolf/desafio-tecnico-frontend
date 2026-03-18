@@ -226,7 +226,7 @@ O seu projeto será avaliado com base nos seguintes pontos:
 1. **Crie um repositório** em sua conta do GitHub com o código do desafio.
 2. Certifique-se de que o projeto pode ser executado seguindo as instruções de configuração do README.
 3. Opcionalmente, hospede uma versão funcional em algum provedor de cloud ou serviço de deploy (por exemplo, Vercel, Netlify, AWS Amplify). O link de demonstração é um diferencial, mas não obrigatório.
-4. Envie o link do seu repositório para `rh@ecoautomacao.com.br`, com cópia para seu responsável técnico. 
+4. Envie o link do seu repositório para `anderson@ecoautomacao.com.br`, com cópia para seu responsável técnico. 
 
 ---
 
