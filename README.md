@@ -61,7 +61,7 @@ cp .env.example .env
 3. Preencha as variáveis de ambiente conforme as credenciais fornecidas. Abaixo, seguem as credenciais:
 
 
-> API_URL=https://api.ecoautomacao.com.br
+> API_URL=https://webhook.ecoplus-apps.com/webhook
 >
 > API_AUTH_TYPE=basic
 >
