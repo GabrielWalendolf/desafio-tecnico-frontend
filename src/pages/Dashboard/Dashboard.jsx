@@ -1,26 +1,31 @@
 /**
  * src/pages/Dashboard/Dashboard.jsx
  * Página principal: KPIs + grid de máquinas + painel lateral de alertas.
- * Orquestra todos os componentes e o estado de filtros.
  */
 import React, { useState, useMemo } from 'react';
-import KpiCards   from '../../components/KpiCards/KpiCards';
-import MachineCard from '../../components/MachineCard/MachineCard';
-import AlertPanel  from '../../components/AlertPanel/AlertPanel';
-import FilterBar   from '../../components/FilterBar/FilterBar';
+import KpiCards    from '../../components/KpiCards/KpiCards';
+import MachineCard  from '../../components/MachineCard/MachineCard';
+import AlertPanel   from '../../components/AlertPanel/AlertPanel';
+import FilterBar    from '../../components/FilterBar/FilterBar';
 import MachineModal from '../../components/MachineModal/MachineModal';
 import { LoadingState, ErrorState, EmptyState } from '../../components/StateViews/StateViews';
 import { groupByStatus, filterMachines, getLocations } from '../../utils/machine';
 import styles from './Dashboard.module.css';
 
-export default function Dashboard({ machines, loading, error, onRefetch, onUpdate }) {
+export default function Dashboard({
+  machines,
+  loading,
+  error,
+  onRefetch,
+  onUpdate,
+  previousCounts,
+}) {
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [search, setSearch]                   = useState('');
   const [localFilter, setLocalFilter]         = useState('');
 
   const counts    = useMemo(() => groupByStatus(machines), [machines]);
-  const locations = useMemo(() => getLocations(machines), [machines]);
-
+  const locations = useMemo(() => getLocations(machines),  [machines]);
   const filtered  = useMemo(
     () => filterMachines(machines, { search, local: localFilter }),
     [machines, search, localFilter]
@@ -28,18 +33,22 @@ export default function Dashboard({ machines, loading, error, onRefetch, onUpdat
 
   return (
     <main className={styles.page}>
-      {/* ── KPI Cards ─────────────────────────────────── */}
+
+      {/* ── KPI Cards ─────────────────────────────────────────── */}
       <section className={styles.kpiSection}>
-        <KpiCards counts={counts} total={machines.length} />
+        <KpiCards
+          counts={counts}
+          total={machines.length}
+          previousCounts={previousCounts}
+        />
       </section>
 
-      {/* ── Main content: grid + sidebar ──────────────── */}
+      {/* ── Main content: grid + sidebar ──────────────────────── */}
       <div className={styles.layout}>
 
-        {/* Left / center: filter + machine grid */}
+        {/* Área central: filtros + grid de máquinas */}
         <div className={styles.gridArea}>
 
-          {/* Filter bar */}
           {!loading && !error && (
             <FilterBar
               search={search}
@@ -52,18 +61,12 @@ export default function Dashboard({ machines, loading, error, onRefetch, onUpdat
             />
           )}
 
-          {/* States */}
           {loading && <LoadingState count={9} />}
 
-          {error && (
-            <ErrorState message={error} onRetry={onRefetch} />
-          )}
+          {error && <ErrorState message={error} onRetry={onRefetch} />}
 
-          {!loading && !error && filtered.length === 0 && (
-            <EmptyState />
-          )}
+          {!loading && !error && filtered.length === 0 && <EmptyState />}
 
-          {/* Machine grid */}
           {!loading && !error && filtered.length > 0 && (
             <div className={styles.grid}>
               {filtered.map((m, i) => (
@@ -71,23 +74,18 @@ export default function Dashboard({ machines, loading, error, onRefetch, onUpdat
                   key={m.id}
                   style={{ animationDelay: `${Math.min(i * 40, 400)}ms` }}
                 >
-                  <MachineCard
-                    machine={m}
-                    onClick={setSelectedMachine}
-                  />
+                  <MachineCard machine={m} onClick={setSelectedMachine} />
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Right: alert panel */}
-        {!loading && (
-          <AlertPanel machines={machines} />
-        )}
+        {/* Painel lateral de alertas */}
+        {!loading && <AlertPanel machines={machines} />}
       </div>
 
-      {/* ── Modal ─────────────────────────────────────── */}
+      {/* ── Modal de detalhes ─────────────────────────────────── */}
       {selectedMachine && (
         <MachineModal
           machine={selectedMachine}
