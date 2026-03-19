@@ -1,0 +1,89 @@
+/* ── ECO+ Design Tokens ─────────────────────────────────────────── */
+:root {
+  --bg-base:       #f4f6f8;
+  --bg-surface:    #ffffff;
+  --bg-elevated:   #f0f2f5;
+  --bg-card:       #ffffff;
+  --bg-hover:      #e8eaed;
+
+  --border:        #d0d7de;
+  --border-subtle: #e4e8ec;
+
+  --accent:        #2da44e;
+  --accent-dim:    rgba(45, 164, 78, 0.12);
+  --accent-glow:   rgba(45, 164, 78, 0.25);
+
+  --warning:       #b76e00;
+  --warning-dim:   rgba(183, 110, 0, 0.12);
+
+  --danger:        #cf222e;
+  --danger-dim:    rgba(207, 34, 46, 0.10);
+
+  --info:          #0969da;
+  --info-dim:      rgba(9, 105, 218, 0.12);
+
+  --muted:         #8c959f;
+  --text-secondary:#57606a;
+  --text-primary:  #24292f;
+  --text-bright:   #1c2128;
+
+  --font-ui:       'Barlow', sans-serif;
+  --font-heading:  'Barlow Condensed', sans-serif;
+  --font-mono:     'JetBrains Mono', monospace;
+
+  --radius-sm:     4px;
+  --radius-md:     8px;
+  --radius-lg:     12px;
+
+  --shadow-card:   0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
+  --shadow-modal:  0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.10);
+
+  --transition:    150ms ease;
+}
+
+/* ── Reset ──────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 14px; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  line-height: 1.5;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: var(--font-ui); }
+input, select, textarea { font-family: var(--font-ui); }
+
+/* ── Scrollbar ──────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ── Utility ────────────────────────────────────────────────────── */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ── Page fade-in ───────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.35s ease both; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: .4; }
+}

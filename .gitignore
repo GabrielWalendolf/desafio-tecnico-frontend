@@ -1,5 +1,4 @@
-# Node modules
 /node_modules
-
-# Environment variables
 .env
+/build
+.DS_Store

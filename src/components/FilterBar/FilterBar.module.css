@@ -1,0 +1,98 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ── Search ── */
+.searchWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.625rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.searchInput {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 2rem 0.4rem 2rem;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  width: 220px;
+  transition: border-color var(--transition);
+}
+
+.searchInput::placeholder { color: var(--muted); }
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.clearBtn {
+  position: absolute;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+  transition: color var(--transition);
+}
+
+.clearBtn:hover { color: var(--text-primary); }
+
+/* ── Select ── */
+.selectWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.selectIcon {
+  position: absolute;
+  left: 0.625rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem 0.4rem 1.875rem;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  min-width: 160px;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* ── Counter ── */
+.counter {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .searchInput { width: 160px; }
+  .counter { display: none; }
+}
