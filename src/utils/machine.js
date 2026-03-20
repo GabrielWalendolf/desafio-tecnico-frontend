@@ -2,32 +2,32 @@
  * src/utils/machine.js
  * Funções utilitárias puras para derivar informações de máquinas.
  */
+import { getStatusCategory, CATEGORY_CSS_CLASS } from '../constants/statusMap';
 
-/** Mapeamento de status → cor CSS variable */
+/** Mapeamento de status → cor CSS variable (para uso em gráficos/ícones) */
 export const STATUS_COLOR = {
-  'Operando':    'var(--accent)',
-  'Alerta':      'var(--danger)',
-  'Temp. Alta':  'var(--danger)',
-  'Em atenção':  'var(--warning)',
-  'Atenção':     'var(--warning)',
-  'Offline':     'var(--muted)',
-  'Parada':      'var(--muted)',
-  'Lubrificação':'var(--warning)',
-  'Instabilidade':'var(--warning)',
-  'Falta de energia': 'var(--danger)',
+  'Operando':           'var(--accent)',
+  'Alerta':             'var(--danger)',
+  'Temp. Alta':         'var(--danger)',
+  'Lubrificação':       'var(--warning)',
+  'Alerta de Potência': 'var(--danger)',
+  'Baixa Produção':     'var(--warning)',
+  'Vibração Alta':      'var(--warning)',
+  'Parada':             'var(--muted)',
+  'Manutenção':         'var(--muted)',
 };
 
 export function getStatusColor(status) {
   return STATUS_COLOR[status] ?? 'var(--muted)';
 }
 
-/** Badge CSS class por status */
+/**
+ * Retorna a classe CSS de badge/dot para um status.
+ * Delega a categorização ao statusMap.
+ */
 export function getStatusClass(status) {
-  const s = (status || '').toLowerCase();
-  if (s.includes('operad')) return 'status--ok';
-  if (s.includes('alerta') || s.includes('temp') || s.includes('energia')) return 'status--danger';
-  if (s.includes('aten') || s.includes('lubri') || s.includes('instab')) return 'status--warn';
-  return 'status--off';
+  const category = getStatusCategory(status);
+  return CATEGORY_CSS_CLASS[category];
 }
 
 /**
@@ -41,23 +41,21 @@ export function getLatestSensorData(machine) {
   }
   const last = dados[dados.length - 1];
   return {
-    rpm:        last.rpm        ?? 0,
-    potencia:   last.potencia   ?? 0,
+    rpm:         last.rpm         ?? 0,
+    potencia:    last.potencia    ?? 0,
     temperatura: last.temperatura ?? 0,
   };
 }
 
 /**
- * Agrupa máquinas por status para os KPI cards do dashboard.
+ * Agrupa máquinas por categoria KPI para os cards do dashboard.
+ * Usa getStatusCategory (via statusMap) como fonte única de verdade.
  */
 export function groupByStatus(machines) {
   return machines.reduce(
     (acc, m) => {
-      const s = (m.status || '').toLowerCase();
-      if (s.includes('operad'))                                   acc.operando++;
-      else if (s.includes('alerta') || s.includes('temp') || s.includes('energia')) acc.alerta++;
-      else if (s.includes('aten') || s.includes('lubri') || s.includes('instab'))   acc.atencao++;
-      else                                                         acc.offline++;
+      const category = getStatusCategory(m.status);
+      acc[category] = (acc[category] ?? 0) + 1;
       return acc;
     },
     { operando: 0, alerta: 0, atencao: 0, offline: 0 }
@@ -116,13 +114,12 @@ export function getLocations(machines) {
  * Retorna porcentagens de tempo em cada estado (mock baseado nos alertas).
  */
 export function calcEfficiency(machine) {
-  const total = (machine?.dados || []).length || 1;
   const alertCount = (machine?.alertas || []).length;
-  const operando = Math.max(0, 100 - alertCount * 12);
+  const operando   = Math.max(0, 100 - alertCount * 12);
   return {
     operando,
-    atencao: Math.min(20, alertCount * 8),
-    alerta:  Math.min(15, alertCount * 4),
+    atencao:    Math.min(20, alertCount * 8),
+    alerta:     Math.min(15, alertCount * 4),
     eficiencia: Math.round(operando * 0.95),
   };
 }
