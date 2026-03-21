@@ -19,14 +19,39 @@
   gap: 0.625rem;
   overflow: hidden;
   animation: cardIn 0.4s ease both;
+  cursor: pointer;
   /* Sobrescreve a transição global para manter a animação de hover */
-  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease, background-color 220ms ease;
+  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease, background-color 220ms ease, opacity 200ms ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,.1);
+  box-shadow: 0 4px 20px rgba(0,0,0,.12);
   transform: translateY(-2px);
   border-color: var(--border-c);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color);
+  outline-offset: 2px;
+}
+
+/* ── Card ativo (filtro selecionado) ── */
+.cardActive {
+  border-color: var(--color) !important;
+  background: var(--bg) !important;
+  box-shadow: 0 0 0 2px var(--border-c), 0 4px 16px rgba(0,0,0,.1) !important;
+  transform: translateY(-2px);
+}
+
+/* ── Cards não selecionados quando há um filtro ativo ── */
+.cardDimmed {
+  opacity: 0.45;
+  filter: grayscale(30%);
+}
+
+.cardDimmed:hover {
+  opacity: 0.7;
+  filter: grayscale(0%);
 }
 
 @keyframes cardIn {
@@ -41,6 +66,22 @@
   width: 3px;
   background: var(--color);
   border-radius: 10px 0 0 10px;
+}
+
+/* ── Indicador de filtro ativo ── */
+.activeIndicator {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: var(--color);
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  line-height: 1.4;
 }
 
 /* Linha superior */

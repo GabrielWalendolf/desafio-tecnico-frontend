@@ -23,13 +23,27 @@ export default function Dashboard({
   const [selectedMachine, setSelectedMachine] = useState(null);
   const [search, setSearch]                   = useState('');
   const [localFilter, setLocalFilter]         = useState('');
+  const [statusFilter, setStatusFilter]       = useState(null); // 'operando' | 'alerta' | 'atencao' | 'offline' | null
 
   const counts    = useMemo(() => groupByStatus(machines), [machines]);
   const locations = useMemo(() => getLocations(machines),  [machines]);
-  const filtered  = useMemo(
-    () => filterMachines(machines, { search, local: localFilter }),
-    [machines, search, localFilter]
-  );
+
+  /* Filtra por texto + local + categoria KPI (statusFilter) */
+  const filtered  = useMemo(() => {
+    let list = filterMachines(machines, { search, local: localFilter });
+    if (statusFilter) {
+      list = list.filter((m) => {
+        const { getStatusCategory } = require('../../constants/statusMap');
+        return getStatusCategory(m.status) === statusFilter;
+      });
+    }
+    return list;
+  }, [machines, search, localFilter, statusFilter]);
+
+  /* Alterna o filtro: clique no mesmo card remove o filtro */
+  const handleKpiClick = (key) => {
+    setStatusFilter((prev) => (prev === key ? null : key));
+  };
 
   return (
     <main className={styles.page}>
@@ -40,8 +54,28 @@ export default function Dashboard({
           counts={counts}
           total={machines.length}
           previousCounts={previousCounts}
+          activeFilter={statusFilter}
+          onCardClick={handleKpiClick}
         />
       </section>
+
+      {/* ── Pill de filtro ativo ───────────────────────────────── */}
+      {statusFilter && (
+        <div className={styles.filterPill}>
+          <span className={styles.filterPillLabel}>
+            Filtrando por: <strong>{
+              { operando: 'Operando', alerta: 'Em Alerta', atencao: 'Em Atenção', offline: 'Offline' }[statusFilter]
+            }</strong>
+          </span>
+          <button
+            className={styles.filterPillClear}
+            onClick={() => setStatusFilter(null)}
+            aria-label="Remover filtro"
+          >
+            × Limpar filtro
+          </button>
+        </div>
+      )}
 
       {/* ── Main content: grid + sidebar ──────────────────────── */}
       <div className={styles.layout}>

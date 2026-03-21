@@ -6,6 +6,7 @@
  *  - Valor absoluto + porcentagem do total
  *  - Barra de progresso proporcional
  *  - Mini tendência (↑ ↓ →) comparando com snapshot anterior
+ *  - Clique filtra o grid de máquinas pelo status correspondente
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -86,7 +87,7 @@ function Trend({ current, previous }) {
 }
 
 /* ── Card individual ───────────────────────────────────────────── */
-function KpiCard({ config, value, total, previousValue, index }) {
+function KpiCard({ config, value, total, previousValue, index, isActive, isAnyActive, onClick }) {
   const { label, sublabel, Icon, colorVar, bgVar, borderVar } = config;
   const pct     = total > 0 ? Math.round((value / total) * 100) : 0;
 
@@ -115,16 +116,34 @@ function KpiCard({ config, value, total, previousValue, index }) {
 
   return (
     <article
-      className={styles.card}
+      className={`
+        ${styles.card}
+        ${isActive ? styles.cardActive : ''}
+        ${isAnyActive && !isActive ? styles.cardDimmed : ''}
+      `}
       style={{
         '--color':    `var(${colorVar})`,
         '--bg':       `var(${bgVar})`,
         '--border-c': `var(${borderVar})`,
         animationDelay: `${index * 80}ms`,
       }}
+      onClick={() => onClick(config.key)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick(config.key)}
+      aria-pressed={isActive}
+      aria-label={`Filtrar por ${label}`}
+      title={isActive ? `Clique para remover o filtro de ${label}` : `Clique para filtrar por ${label}`}
     >
       {/* Barra de acento lateral */}
       <div className={styles.accentBar} />
+
+      {/* Indicador de filtro ativo */}
+      {isActive && (
+        <div className={styles.activeIndicator}>
+          <span>Filtrando</span>
+        </div>
+      )}
 
       {/* Linha superior: ícone + tendência */}
       <div className={styles.top}>
@@ -162,7 +181,7 @@ function KpiCard({ config, value, total, previousValue, index }) {
 }
 
 /* ── Export principal ──────────────────────────────────────────── */
-export default function KpiCards({ counts, total, previousCounts }) {
+export default function KpiCards({ counts, total, previousCounts, activeFilter, onCardClick }) {
   return (
     <div className={styles.grid}>
       {CARDS.map((card, i) => (
@@ -173,6 +192,9 @@ export default function KpiCards({ counts, total, previousCounts }) {
           total={total}
           previousValue={previousCounts?.[card.key]}
           index={i}
+          isActive={activeFilter === card.key}
+          isAnyActive={activeFilter !== null && activeFilter !== undefined}
+          onClick={onCardClick}
         />
       ))}
     </div>
