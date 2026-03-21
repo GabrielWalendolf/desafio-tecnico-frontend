@@ -67,11 +67,21 @@
   gap: 0.875rem;
 }
 
-/* ── Machine grid ── */
+/* ── Machine grid ──
+   align-items: stretch garante que todos os wrappers dos cards
+   tenham a mesma altura dentro de cada linha do grid.
+   O card por sua vez usa height: 100% para preenchê-la.
+── */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 0.75rem;
+  align-items: stretch;
+}
+
+/* O wrapper animado também precisa ter height: 100% */
+.grid > div {
+  height: 100%;
 }
 
 /* ── Responsive ── */

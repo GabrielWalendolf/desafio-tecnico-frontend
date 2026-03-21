@@ -72,14 +72,15 @@ export default function MachineCard({ machine, onClick }) {
         </div>
       </div>
 
-      {/* Alertas */}
-      {machine.alertas?.length > 0 && (
-        <div className={styles.alerts}>
-          {machine.alertas.map((a) => (
-            <span key={a} className={styles.alertTag}>{a}</span>
-          ))}
-        </div>
-      )}
+      {/*
+        A div de alertas é SEMPRE renderizada (mesmo sem alertas),
+        assim todos os cards reservam a mesma altura e o grid fica alinhado.
+      */}
+      <div className={styles.alerts}>
+        {machine.alertas?.map((a) => (
+          <span key={a} className={styles.alertTag}>{a}</span>
+        ))}
+      </div>
 
       {/* Rodapé */}
       <div className={styles.footer}>
