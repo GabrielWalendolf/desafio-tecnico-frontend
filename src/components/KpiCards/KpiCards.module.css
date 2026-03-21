@@ -1,54 +1,30 @@
 /* ══════════════════════════════════════════════════════════════
-   KpiCards.module.css
-   4 cards em linha, light bg, borda colorida lateral, tendência
+   KpiCards.module.css — tokens via CSS vars (light + dark)
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Tokens de cor por status (definidos inline via CSS var) ─── */
-/* Cada card recebe --color, --bg, --border-c via style prop     */
-
-:root {
-  --kpi-ok:            #2da44e;
-  --kpi-ok-bg:         rgba(45, 164, 78, 0.07);
-  --kpi-ok-border:     rgba(45, 164, 78, 0.25);
-
-  --kpi-danger:        #cf222e;
-  --kpi-danger-bg:     rgba(207, 34, 46, 0.07);
-  --kpi-danger-border: rgba(207, 34, 46, 0.25);
-
-  --kpi-warn:          #b76e00;
-  --kpi-warn-bg:       rgba(183, 110, 0, 0.07);
-  --kpi-warn-border:   rgba(183, 110, 0, 0.25);
-
-  --kpi-off:           #57606a;
-  --kpi-off-bg:        rgba(87, 96, 106, 0.06);
-  --kpi-off-border:    rgba(87, 96, 106, 0.2);
-}
-
-/* ── Grid 4 colunas ─────────────────────────────────────────── */
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.875rem;
 }
 
-/* ── Card base ───────────────────────────────────────────────── */
 .card {
   position: relative;
-  background: #ffffff;
-  border: 1px solid var(--border-subtle, #e8ecf0);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: 10px;
   padding: 1.125rem 1.125rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
   overflow: hidden;
-  /* Entrada animada */
   animation: cardIn 0.4s ease both;
-  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
+  /* Sobrescreve a transição global para manter a animação de hover */
+  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease, background-color 220ms ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
   transform: translateY(-2px);
   border-color: var(--border-c);
 }
@@ -58,18 +34,16 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Barra de acento lateral (3px colorida à esquerda) ─────── */
+/* Barra de acento lateral */
 .accentBar {
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
+  left: 0; top: 0; bottom: 0;
   width: 3px;
   background: var(--color);
   border-radius: 10px 0 0 10px;
 }
 
-/* ── Linha superior: ícone + tendência ──────────────────────── */
+/* Linha superior */
 .top {
   display: flex;
   align-items: center;
@@ -90,7 +64,7 @@
   flex-shrink: 0;
 }
 
-/* ── Tendência ───────────────────────────────────────────────── */
+/* Tendência */
 .trend {
   display: flex;
   align-items: center;
@@ -102,24 +76,11 @@
   border-radius: 20px;
   white-space: nowrap;
 }
+.trendUp      { background: rgba(207, 34, 46, 0.08); color: var(--kpi-danger); }
+.trendDown    { background: rgba(45, 164, 78, 0.08);  color: var(--kpi-ok); }
+.trendNeutral { background: var(--bg-elevated);        color: var(--muted); }
 
-.trendUp {
-  background: rgba(207, 34, 46, 0.08);
-  color: #cf222e;
-}
-
-/* Para "Operando", subida é boa — mas mantemos semântica simples aqui */
-.trendDown {
-  background: rgba(45, 164, 78, 0.08);
-  color: #2da44e;
-}
-
-.trendNeutral {
-  background: rgba(87, 96, 106, 0.08);
-  color: #57606a;
-}
-
-/* ── Valor + porcentagem ─────────────────────────────────────── */
+/* Valor + porcentagem */
 .valueRow {
   display: flex;
   align-items: baseline;
@@ -130,7 +91,7 @@
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 2.25rem;
   font-weight: 700;
-  color: #1c2128;
+  color: var(--text-bright);
   line-height: 1;
   letter-spacing: -0.01em;
 }
@@ -146,31 +107,27 @@
   line-height: 1.4;
 }
 
-/* ── Labels ──────────────────────────────────────────────────── */
-.labels {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
+/* Labels */
+.labels { display: flex; flex-direction: column; gap: 0.1rem; }
 
 .label {
   font-family: 'Barlow', sans-serif;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #24292f;
+  color: var(--text-bright);
   letter-spacing: 0.01em;
 }
 
 .sublabel {
   font-size: 0.7rem;
-  color: #8c959f;
+  color: var(--muted);
   font-weight: 400;
 }
 
-/* ── Barra de progresso ──────────────────────────────────────── */
+/* Barra de progresso */
 .progressTrack {
   height: 4px;
-  background: var(--bg-elevated, #f0f2f5);
+  background: var(--bg-elevated);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 0.125rem;
@@ -181,17 +138,13 @@
   background: var(--color);
   border-radius: 4px;
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  /* Brilho sutil na barra */
   box-shadow: 0 0 6px var(--border-c);
 }
 
-/* ── Responsividade ──────────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .grid { grid-template-columns: repeat(2, 1fr); }
-}
-
+/* Responsividade */
+@media (max-width: 1024px) { .grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 480px) {
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+  .grid  { grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
   .value { font-size: 1.875rem; }
   .card  { padding: 0.875rem; }
 }

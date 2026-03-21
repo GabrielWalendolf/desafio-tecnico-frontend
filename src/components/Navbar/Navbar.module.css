@@ -1,20 +1,17 @@
 /* ══════════════════════════════════════════════════════════════
-   Navbar.module.css — Dark Industrial
-   Fundo #0d1117 (GitHub dark) com accent verde ECO+
+   Navbar.module.css — Dark Industrial (sem alteração de estilo)
+   Adicionado: .userDropdownItemPrefs para destacar "Preferências"
    ══════════════════════════════════════════════════════════════ */
 
-/* ── Wrapper ────────────────────────────────────────────────── */
 .navbar {
   position: sticky;
   top: 0;
   z-index: 100;
   background: #0d1117;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  /* Sombra suave para separar do conteúdo light */
   box-shadow: 0 1px 0 rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.25);
 }
 
-/* Linha de acento verde no topo (1px de glow) */
 .topAccent {
   height: 2px;
   background: linear-gradient(
@@ -28,7 +25,6 @@
   opacity: 0.8;
 }
 
-/* ── Inner container ─────────────────────────────────────────── */
 .inner {
   display: flex;
   align-items: center;
@@ -39,13 +35,11 @@
   margin: 0 auto;
 }
 
-/* ── Brand ───────────────────────────────────────────────────── */
 .brand {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   flex-shrink: 0;
-  text-decoration: none;
 }
 
 .logoIcon {
@@ -82,13 +76,12 @@
   font-size: 1.3rem;
   font-weight: 800;
   color: #3fb950;
-  /* pulso sutil no símbolo + */
   animation: plusPulse 3s ease-in-out infinite;
 }
 
 @keyframes plusPulse {
   0%, 100% { text-shadow: none; }
-  50% { text-shadow: 0 0 12px rgba(63,185,80,.6); }
+  50%       { text-shadow: 0 0 12px rgba(63,185,80,.6); }
 }
 
 .logoTagline {
@@ -102,7 +95,6 @@
   margin-top: 1px;
 }
 
-/* ── Divider vertical ────────────────────────────────────────── */
 .divider {
   width: 1px;
   height: 20px;
@@ -111,7 +103,6 @@
   flex-shrink: 0;
 }
 
-/* ── Navegação principal ─────────────────────────────────────── */
 .nav {
   display: flex;
   align-items: center;
@@ -147,7 +138,6 @@
   position: relative;
 }
 
-/* Underline ativo */
 .navItemActive::after {
   content: '';
   position: absolute;
@@ -161,7 +151,6 @@
   box-shadow: 0 0 6px rgba(63,185,80,.5);
 }
 
-/* ── Actions (lado direito) ──────────────────────────────────── */
 .actions {
   display: flex;
   align-items: center;
@@ -169,7 +158,6 @@
   margin-left: auto;
 }
 
-/* Última atualização */
 .lastUpdate {
   display: flex;
   align-items: center;
@@ -180,7 +168,6 @@
   white-space: nowrap;
 }
 
-/* Botão Atualizar */
 .refreshBtn {
   display: flex;
   align-items: center;
@@ -204,18 +191,11 @@
   color: #3fb950;
 }
 
-.refreshBtn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+.refreshBtn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* Ícone girando */
-.spinning {
-  animation: spin 0.7s linear infinite;
-}
+.spinning { animation: spin 0.7s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Botão ícone genérico */
 .iconBtn {
   position: relative;
   width: 34px;
@@ -244,7 +224,6 @@
   color: #cdd9e5 !important;
 }
 
-/* Badge de notificação */
 .badge {
   position: absolute;
   top: 3px;
@@ -265,10 +244,7 @@
   border: 1.5px solid #0d1117;
 }
 
-/* ── Bell dropdown ───────────────────────────────────────────── */
-.bellWrap {
-  position: relative;
-}
+.bellWrap { position: relative; }
 
 .bellDropdown {
   position: absolute;
@@ -329,21 +305,10 @@
   gap: 0.25rem;
 }
 
-.dropdownAlert {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #f85149;
-}
+.dropdownAlert { font-size: 0.8125rem; font-weight: 600; color: #f85149; }
+.dropdownSub   { font-size: 0.75rem; color: #768390; }
 
-.dropdownSub {
-  font-size: 0.75rem;
-  color: #768390;
-}
-
-/* ── Avatar / User dropdown ──────────────────────────────────── */
-.userWrap {
-  position: relative;
-}
+.userWrap { position: relative; }
 
 .userBtn {
   display: flex;
@@ -381,23 +346,11 @@
   flex-shrink: 0;
 }
 
-.userName {
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #cdd9e5;
-  white-space: nowrap;
-}
+.userName { font-size: 0.8rem; font-weight: 500; color: #cdd9e5; white-space: nowrap; }
 
-.chevron {
-  transition: transform 220ms ease;
-  color: #484f58;
-}
+.chevron { transition: transform 220ms ease; color: #484f58; }
+.chevronOpen { transform: rotate(180deg); }
 
-.chevronOpen {
-  transform: rotate(180deg);
-}
-
-/* ── User dropdown panel ─────────────────────────────────────── */
 .userDropdown {
   position: absolute;
   top: calc(100% + 8px);
@@ -412,7 +365,6 @@
   z-index: 200;
 }
 
-/* Cabeçalho do perfil */
 .userDropdownHeader {
   display: flex;
   align-items: center;
@@ -436,28 +388,15 @@
   flex-shrink: 0;
 }
 
-.userDropdownName {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: #e6edf3;
-  line-height: 1.2;
-}
+.userDropdownName  { font-size: 0.8125rem; font-weight: 600; color: #e6edf3; line-height: 1.2; }
+.userDropdownRole  { font-size: 0.7rem; color: #484f58; font-family: 'JetBrains Mono', monospace; margin-top: 1px; }
 
-.userDropdownRole {
-  font-size: 0.7rem;
-  color: #484f58;
-  font-family: 'JetBrains Mono', monospace;
-  margin-top: 1px;
-}
-
-/* Divider */
 .userDropdownDivider {
   height: 1px;
   background: rgba(255,255,255,.07);
   margin: 0.25rem 0;
 }
 
-/* Itens do menu */
 .userDropdownItem {
   display: flex;
   align-items: center;
@@ -480,22 +419,24 @@
   color: #e6edf3;
 }
 
-/* Item de logout (vermelho) */
-.userDropdownLogout {
+/* ── Preferências: destaque com accent verde ── */
+.userDropdownItemPrefs {
   color: #8b949e;
 }
 
+.userDropdownItemPrefs:hover {
+  background: rgba(63, 185, 80, 0.08) !important;
+  color: #3fb950 !important;
+}
+
+.userDropdownLogout { color: #8b949e; }
 .userDropdownLogout:hover {
   background: rgba(207, 34, 46, 0.1) !important;
   color: #f85149 !important;
 }
 
-/* ── Mobile menu button ──────────────────────────────────────── */
-.mobileMenu {
-  display: none !important;
-}
+.mobileMenu { display: none !important; }
 
-/* ── Mobile nav (dropdown) ───────────────────────────────────── */
 .mobileNav {
   display: none;
   flex-direction: column;
@@ -511,18 +452,16 @@
   justify-content: flex-start;
 }
 
-/* ── Responsividade ──────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .nav      { display: none; }
-  .divider  { display: none; }
-  .liveStatus { display: none; }
+  .nav        { display: none; }
+  .divider    { display: none; }
   .mobileMenu { display: flex !important; }
   .mobileNav  { display: flex; }
 }
 
 @media (max-width: 600px) {
-  .lastUpdate { display: none; }
+  .lastUpdate     { display: none; }
   .refreshBtn span { display: none; }
-  .refreshBtn { padding: 0.375rem 0.5rem; }
-  .inner { padding: 0 0.875rem; }
+  .refreshBtn     { padding: 0.375rem 0.5rem; }
+  .inner          { padding: 0 0.875rem; }
 }
