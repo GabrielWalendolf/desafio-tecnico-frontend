@@ -2,13 +2,28 @@
  * src/components/MachineModal/MachineModal.jsx
  * Modal de detalhes da máquina com 4 abas:
  * Resumo | Histórico | Estatísticas | Alertas & Sensores
- * Inclui gráfico de área (24h/7d/30d) e formulário de edição de metadados.
+ * Usa Phosphor Icons (bold) para todos os ícones visuais.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
+import {
+  X,
+  MapPin,
+  IdentificationCard,
+  Clock,
+  Gauge,
+  Lightning,
+  Thermometer,
+  CheckCircle,
+  Warning,
+  Robot,
+  PencilSimple,
+  FloppyDisk,
+  ArrowCounterClockwise,
+} from '@phosphor-icons/react';
 import {
   getLatestSensorData,
   getStatusClass,
@@ -21,15 +36,7 @@ import styles from './MachineModal.module.css';
 function MachinePlaceholderImage({ name }) {
   return (
     <div className={styles.imagePlaceholder}>
-      <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-        <rect x="4" y="20" width="56" height="32" rx="4" stroke="currentColor" strokeWidth="2"/>
-        <rect x="12" y="28" width="12" height="8" rx="2" fill="currentColor" opacity=".3"/>
-        <rect x="28" y="26" width="20" height="12" rx="2" fill="currentColor" opacity=".2"/>
-        <circle cx="52" cy="16" r="8" fill="currentColor" opacity=".15" stroke="currentColor" strokeWidth="2"/>
-        <path d="M49 16h6M52 13v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        <rect x="4" y="52" width="16" height="4" rx="1" fill="currentColor" opacity=".2"/>
-        <rect x="44" y="52" width="16" height="4" rx="1" fill="currentColor" opacity=".2"/>
-      </svg>
+      <Robot size={48} weight="bold" />
       <span>{name}</span>
     </div>
   );
@@ -155,13 +162,17 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
               </div>
               <div className={styles.machineMeta}>
                 <span>
-                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" style={{verticalAlign:'middle',marginRight:4}}>
-                    <path d="M8 1a5 5 0 0 0-5 5c0 4 5 9 5 9s5-5 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/>
-                  </svg>
+                  <MapPin size={11} weight="bold" style={{ verticalAlign: 'middle', marginRight: 4 }} />
                   {machine.local}
                 </span>
-                <span>ID #{machine.id}</span>
-                <span>Atualizado: {formatDateTime(machine.ultimaAtualizacao)}</span>
+                <span>
+                  <IdentificationCard size={11} weight="bold" style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                  ID #{machine.id}
+                </span>
+                <span>
+                  <Clock size={11} weight="bold" style={{ verticalAlign: 'middle', marginRight: 4 }} />
+                  {formatDateTime(machine.ultimaAtualizacao)}
+                </span>
               </div>
               {/* KPIs rápidos */}
               <div className={styles.quickKpis}>
@@ -185,9 +196,7 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
             </div>
           </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Fechar">
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-              <path d="M2 2l12 12M14 2L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
+            <X size={18} weight="bold" />
           </button>
         </div>
 
@@ -232,7 +241,8 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                     <h3 className={styles.summaryTitle}>Informações</h3>
                     {!editMode && (
                       <button className={styles.editBtn} onClick={() => setEditMode(true)}>
-                        ✎ Editar
+                        <PencilSimple size={12} weight="bold" />
+                        Editar
                       </button>
                     )}
                   </div>
@@ -264,6 +274,7 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                           onClick={() => { setEditMode(false); setSaveStatus(null); }}
                           disabled={saving}
                         >
+                          <ArrowCounterClockwise size={13} weight="bold" />
                           Cancelar
                         </button>
                         <button
@@ -271,19 +282,26 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                           onClick={handleSave}
                           disabled={saving}
                         >
+                          <FloppyDisk size={13} weight="bold" />
                           {saving ? 'Salvando…' : 'Salvar'}
                         </button>
                       </div>
                       {saveStatus === 'success' && (
-                        <div className={styles.alertSuccess}>✓ Atualizado com sucesso!</div>
+                        <div className={styles.alertSuccess}>
+                          <CheckCircle size={13} weight="bold" /> Atualizado com sucesso!
+                        </div>
                       )}
                       {saveStatus === 'error' && (
-                        <div className={styles.alertError}>✕ Falha ao atualizar. Tente novamente.</div>
+                        <div className={styles.alertError}>
+                          <Warning size={13} weight="bold" /> Falha ao atualizar. Tente novamente.
+                        </div>
                       )}
                     </div>
                   )}
                   {saveStatus === 'success' && !editMode && (
-                    <div className={styles.alertSuccess}>✓ Atualizado com sucesso!</div>
+                    <div className={styles.alertSuccess}>
+                      <CheckCircle size={13} weight="bold" /> Atualizado com sucesso!
+                    </div>
                   )}
                 </div>
               </div>
@@ -374,16 +392,16 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
             <div className={styles.tabPane}>
               {machine.alertas?.length === 0 ? (
                 <div className={styles.noAlerts}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 11V7m0 6v2" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
+                  <CheckCircle size={40} weight="bold" color="var(--accent)" />
                   <p>Nenhum alerta ativo para esta máquina.</p>
                 </div>
               ) : (
                 <div className={styles.alertGrid}>
                   {machine.alertas.map((a) => (
                     <div key={a} className={styles.alertCard}>
-                      <span className={styles.alertIcon}>⚠</span>
+                      <span className={styles.alertIcon}>
+                        <Warning size={18} weight="bold" />
+                      </span>
                       <div>
                         <p className={styles.alertTitle}>{a}</p>
                         <p className={styles.alertDesc}>
@@ -399,11 +417,14 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
               <h4 className={styles.sensorsTitle}>Última Leitura de Sensores</h4>
               <div className={styles.sensorGrid}>
                 {[
-                  { label: 'RPM',         val: rpm.toLocaleString('pt-BR'),        unit: 'RPM', ok: rpm > 0 },
-                  { label: 'Potência',    val: potencia.toLocaleString('pt-BR'),   unit: 'W',   ok: potencia > 0 },
-                  { label: 'Temperatura', val: `${temperatura}°C`,                 unit: '',    ok: temperatura < 80 },
+                  { label: 'RPM',         icon: Gauge,        val: rpm.toLocaleString('pt-BR'),        unit: 'RPM', ok: rpm > 0 },
+                  { label: 'Potência',    icon: Lightning,    val: potencia.toLocaleString('pt-BR'),   unit: 'W',   ok: potencia > 0 },
+                  { label: 'Temperatura', icon: Thermometer,  val: `${temperatura}°C`,                 unit: '',    ok: temperatura < 80 },
                 ].map((s) => (
                   <div key={s.label} className={styles.sensorRow}>
+                    <span className={styles.sensorIcon}>
+                      <s.icon size={15} weight="bold" />
+                    </span>
                     <span className={styles.sensorLabel}>{s.label}</span>
                     <span className={`${styles.sensorVal} ${!s.ok ? styles.sensorDanger : ''}`}>
                       {s.val} {s.unit}

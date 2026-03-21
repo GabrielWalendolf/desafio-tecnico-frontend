@@ -1,26 +1,25 @@
 /**
  * src/components/Navbar/Navbar.jsx
- * Navbar dark industrial com Lucide React.
- * Estilo: dark navbar contrastando com light cards do dashboard.
+ * Navbar dark industrial com Phosphor Icons (bold).
  */
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Activity,
-  RefreshCw,
+  Pulse,
+  ArrowClockwise,
   Bell,
-  Settings,
-  ChevronDown,
+  Gear,
+  CaretDown,
   Cpu,
-  LayoutDashboard,
-  BarChart2,
-  Menu,
+  SquaresFour,
+  ChartBar,
+  List,
   X,
   User,
-  LogOut,
-  Shield,
+  SignOut,
+  ShieldCheck,
   Moon,
-  HelpCircle,
-} from 'lucide-react';
+  Question,
+} from '@phosphor-icons/react';
 import styles from './Navbar.module.css';
 
 /* ── Item de navegação ──────────────────────────────────────────── */
@@ -31,7 +30,7 @@ function NavItem({ icon: Icon, label, active, onClick }) {
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
     >
-      <Icon size={15} strokeWidth={active ? 2.2 : 1.8} />
+      <Icon size={16} weight="bold" />
       <span>{label}</span>
     </button>
   );
@@ -56,9 +55,9 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
   }, []);
 
   const navItems = [
-    { label: 'Dashboard',    icon: LayoutDashboard },
-    { label: 'Relatórios',   icon: BarChart2 },
-    { label: 'Configurações',icon: Settings },
+    { label: 'Dashboard',    icon: SquaresFour },
+    { label: 'Relatórios',   icon: ChartBar },
+    { label: 'Configurações',icon: Gear },
   ];
 
   return (
@@ -70,7 +69,7 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
         {/* ── Brand ───────────────────────────────────────── */}
         <div className={styles.brand}>
           <div className={styles.logoIcon}>
-            <Cpu size={18} strokeWidth={1.8} />
+            <Cpu size={18} weight="bold" />
           </div>
           <div className={styles.logoText}>
             <span className={styles.logoEco}>ECO</span>
@@ -101,7 +100,7 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
           {/* Última atualização */}
           {lastFetch && (
             <span className={styles.lastUpdate}>
-              <Activity size={11} />
+              <Pulse size={11} weight="bold" />
               {lastFetch.toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -118,9 +117,9 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
             title="Recarregar dados"
             aria-label="Atualizar dados"
           >
-            <RefreshCw
+            <ArrowClockwise
               size={14}
-              strokeWidth={2}
+              weight="bold"
               className={loading ? styles.spinning : ''}
             />
             <span>{loading ? 'Carregando…' : 'Atualizar'}</span>
@@ -133,7 +132,7 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
               onClick={() => setBellOpen((o) => !o)}
               aria-label={`Notificações${alertCount > 0 ? ` (${alertCount} alertas)` : ''}`}
             >
-              <Bell size={16} strokeWidth={1.8} />
+              <Bell size={16} weight="bold" />
               {alertCount > 0 && (
                 <span className={styles.badge}>
                   {alertCount > 9 ? '9+' : alertCount}
@@ -152,7 +151,7 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
                 </div>
                 {alertCount === 0 ? (
                   <div className={styles.dropdownEmpty}>
-                    <Activity size={24} />
+                    <Pulse size={24} weight="bold" />
                     <span>Sistema operando normalmente</span>
                   </div>
                 ) : (
@@ -179,9 +178,9 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
             >
               <div className={styles.avatar}>OP</div>
               <span className={styles.userName}>Operador</span>
-              <ChevronDown
+              <CaretDown
                 size={13}
-                strokeWidth={2}
+                weight="bold"
                 className={`${styles.chevron} ${userOpen ? styles.chevronOpen : ''}`}
               />
             </button>
@@ -202,19 +201,19 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
 
                 {/* Itens do menu */}
                 <button className={styles.userDropdownItem} role="menuitem">
-                  <User size={14} strokeWidth={1.8} />
+                  <User size={14} weight="bold" />
                   <span>Meu Perfil</span>
                 </button>
                 <button className={styles.userDropdownItem} role="menuitem">
-                  <Shield size={14} strokeWidth={1.8} />
+                  <ShieldCheck size={14} weight="bold" />
                   <span>Permissões</span>
                 </button>
                 <button className={styles.userDropdownItem} role="menuitem">
-                  <Settings size={14} strokeWidth={1.8} />
+                  <Gear size={14} weight="bold" />
                   <span>Preferências</span>
                 </button>
                 <button className={styles.userDropdownItem} role="menuitem">
-                  <HelpCircle size={14} strokeWidth={1.8} />
+                  <Question size={14} weight="bold" />
                   <span>Ajuda & Suporte</span>
                 </button>
 
@@ -222,7 +221,7 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
 
                 {/* Sair */}
                 <button className={`${styles.userDropdownItem} ${styles.userDropdownLogout}`} role="menuitem">
-                  <LogOut size={14} strokeWidth={1.8} />
+                  <SignOut size={14} weight="bold" />
                   <span>Sair</span>
                 </button>
               </div>
@@ -235,7 +234,10 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
             onClick={() => setMobileOpen((o) => !o)}
             aria-label="Menu mobile"
           >
-            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+            {mobileOpen
+              ? <X size={18} weight="bold" />
+              : <List size={18} weight="bold" />
+            }
           </button>
         </div>
       </div>

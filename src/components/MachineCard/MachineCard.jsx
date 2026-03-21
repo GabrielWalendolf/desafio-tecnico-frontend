@@ -1,36 +1,17 @@
 /**
  * src/components/MachineCard/MachineCard.jsx
  * Card de máquina individual para o grid do dashboard.
- * Exibe nome, local, status colorido, RPM, potência e temperatura.
+ * Usa Phosphor Icons (bold) para todos os ícones visuais.
  */
 import React from 'react';
+import {
+  Gauge,
+  Lightning,
+  Thermometer,
+  MapPin,
+} from '@phosphor-icons/react';
 import { getStatusClass, getLatestSensorData, formatDateTime } from '../../utils/machine';
 import styles from './MachineCard.module.css';
-
-/* Ícones SVG simples inline para leveza */
-function IconRPM() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-      <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.5"/>
-      <path d="M8 8L5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-      <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
-    </svg>
-  );
-}
-function IconPower() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-      <path d="M8 2v5M5.3 4.1A5 5 0 1 0 10.7 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
-function IconTemp() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
-      <path d="M8 9V4a1 1 0 0 0-2 0v5a3 3 0 1 0 2 0z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-    </svg>
-  );
-}
 
 export default function MachineCard({ machine, onClick }) {
   const { rpm, potencia, temperatura } = getLatestSensorData(machine);
@@ -62,26 +43,30 @@ export default function MachineCard({ machine, onClick }) {
 
       {/* Local */}
       <div className={styles.location}>
-        <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-          <path d="M8 1a5 5 0 0 0-5 5c0 4 5 9 5 9s5-5 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4z" fill="currentColor"/>
-        </svg>
+        <MapPin size={12} weight="bold" />
         {machine.local}
       </div>
 
       {/* Sensor metrics */}
       <div className={styles.metrics}>
         <div className={styles.metric}>
-          <span className={styles.metricIcon}><IconRPM /></span>
+          <span className={styles.metricIcon}>
+            <Gauge size={13} weight="bold" />
+          </span>
           <span className={styles.metricVal}>{rpm.toLocaleString('pt-BR')}</span>
           <span className={styles.metricUnit}>RPM</span>
         </div>
         <div className={styles.metric}>
-          <span className={styles.metricIcon}><IconPower /></span>
+          <span className={styles.metricIcon}>
+            <Lightning size={13} weight="bold" />
+          </span>
           <span className={styles.metricVal}>{potencia.toLocaleString('pt-BR')}</span>
           <span className={styles.metricUnit}>W</span>
         </div>
         <div className={`${styles.metric} ${tempClass}`}>
-          <span className={styles.metricIcon}><IconTemp /></span>
+          <span className={styles.metricIcon}>
+            <Thermometer size={13} weight="bold" />
+          </span>
           <span className={styles.metricVal}>{temperatura}</span>
           <span className={styles.metricUnit}>°C</span>
         </div>

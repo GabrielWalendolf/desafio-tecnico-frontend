@@ -1,22 +1,22 @@
 /**
  * src/components/KpiCards/KpiCards.jsx
  *
- * 4 cards KPI em linha:
- *  - Ícone Lucide temático por status
+ * 4 cards KPI em linha com Phosphor Icons (bold):
+ *  - Ícone temático por status
  *  - Valor absoluto + porcentagem do total
  *  - Barra de progresso proporcional
  *  - Mini tendência (↑ ↓ →) comparando com snapshot anterior
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  CheckCircle2,
-  AlertTriangle,
+  CheckCircle,
+  Warning,
   Eye,
-  WifiOff,
-  TrendingUp,
-  TrendingDown,
+  WifiX,
+  TrendUp,
+  TrendDown,
   Minus,
-} from 'lucide-react';
+} from '@phosphor-icons/react';
 import styles from './KpiCards.module.css';
 
 /* ── Configuração de cada card ─────────────────────────────────── */
@@ -25,7 +25,7 @@ const CARDS = [
     key:       'operando',
     label:     'Operando',
     sublabel:  'Funcionando normalmente',
-    Icon:      CheckCircle2,
+    Icon:      CheckCircle,
     colorVar:  '--kpi-ok',
     bgVar:     '--kpi-ok-bg',
     borderVar: '--kpi-ok-border',
@@ -34,7 +34,7 @@ const CARDS = [
     key:       'alerta',
     label:     'Em Alerta',
     sublabel:  'Requer atenção imediata',
-    Icon:      AlertTriangle,
+    Icon:      Warning,
     colorVar:  '--kpi-danger',
     bgVar:     '--kpi-danger-bg',
     borderVar: '--kpi-danger-border',
@@ -52,7 +52,7 @@ const CARDS = [
     key:       'offline',
     label:     'Offline',
     sublabel:  'Sem comunicação',
-    Icon:      WifiOff,
+    Icon:      WifiX,
     colorVar:  '--kpi-off',
     bgVar:     '--kpi-off-bg',
     borderVar: '--kpi-off-border',
@@ -68,7 +68,7 @@ function Trend({ current, previous }) {
   if (diff === 0) {
     return (
       <span className={`${styles.trend} ${styles.trendNeutral}`}>
-        <Minus size={11} strokeWidth={2.5} />
+        <Minus size={11} weight="bold" />
         <span>Estável</span>
       </span>
     );
@@ -78,8 +78,8 @@ function Trend({ current, previous }) {
   return (
     <span className={`${styles.trend} ${isUp ? styles.trendUp : styles.trendDown}`}>
       {isUp
-        ? <TrendingUp  size={11} strokeWidth={2.5} />
-        : <TrendingDown size={11} strokeWidth={2.5} />}
+        ? <TrendUp  size={11} weight="bold" />
+        : <TrendDown size={11} weight="bold" />}
       <span>{isUp ? '+' : ''}{diff} vs anterior</span>
     </span>
   );
@@ -117,8 +117,8 @@ function KpiCard({ config, value, total, previousValue, index }) {
     <article
       className={styles.card}
       style={{
-        '--color':  `var(${colorVar})`,
-        '--bg':     `var(${bgVar})`,
+        '--color':    `var(${colorVar})`,
+        '--bg':       `var(${bgVar})`,
         '--border-c': `var(${borderVar})`,
         animationDelay: `${index * 80}ms`,
       }}
@@ -129,7 +129,7 @@ function KpiCard({ config, value, total, previousValue, index }) {
       {/* Linha superior: ícone + tendência */}
       <div className={styles.top}>
         <div className={styles.iconWrap}>
-          <Icon size={18} strokeWidth={1.8} />
+          <Icon size={18} weight="bold" />
         </div>
         <Trend current={value} previous={previousValue} />
       </div>
