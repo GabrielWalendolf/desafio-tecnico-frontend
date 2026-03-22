@@ -39,26 +39,26 @@ export default function MachineCard({ machine, onClick }) {
       onKeyDown={(e) => e.key === 'Enter' && onClick(machine)}
       aria-label={`Ver detalhes de ${machine.codigo}`}
     >
-      {/* Header ── nome (esquerda) + status label+badge (direita) */}
+      {/* Header ── nome (esquerda) + location (direita) */}
       <div className={styles.header}>
         <div className={styles.titleGroup}>
           <span className={`${styles.statusDot} ${styles[statusClass.replace('status--', 'dot')]}`} />
           <h3 className={styles.name}>{machine.codigo}</h3>
         </div>
 
-        {/* "Status:" acima, badge abaixo — alinhados à direita */}
-        <div className={styles.statusGroup}>
-          <span className={styles.statusLabel}>Status:</span>
-          <span className={`${styles.badge} ${styles[statusClass.replace('status--', 'badge')]}`}>
-            {machine.status}
-          </span>
+        {/* Local alinhado à direita no header */}
+        <div className={styles.location}>
+          <MapPin size={12} weight="bold" />
+          {machine.local}
         </div>
       </div>
 
-      {/* Local */}
-      <div className={styles.location}>
-        <MapPin size={12} weight="bold" />
-        {machine.local}
+      {/* Status label + badge lado a lado */}
+      <div className={styles.statusRow}>
+        <span className={styles.statusLabel}>Status:</span>
+        <span className={`${styles.badge} ${styles[statusClass.replace('status--', 'badge')]}`}>
+          {machine.status}
+        </span>
       </div>
 
       {/* Sensor metrics */}
