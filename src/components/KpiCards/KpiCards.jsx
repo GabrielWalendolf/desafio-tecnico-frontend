@@ -1,11 +1,10 @@
 /**
  * src/components/KpiCards/KpiCards.jsx
  *
- * 4 cards KPI em linha com Phosphor Icons (bold):
- *  - Ícone temático por status
- *  - Valor absoluto + porcentagem do total
- *  - Barra de progresso proporcional
- *  - Mini tendência (↑ ↓ →) comparando com snapshot anterior
+ * Layout alterado:
+ *  - Porcentagem ocupa o topo (onde ficava o bigNumber)
+ *  - BigNumber centralizado no corpo do card
+ *  - Tendência permanece ao lado da porcentagem
  *  - Clique filtra o grid de máquinas pelo status correspondente
  */
 import React, { useEffect, useRef, useState } from 'react';
@@ -81,7 +80,7 @@ function Trend({ current, previous }) {
       {isUp
         ? <TrendUp  size={11} weight="bold" />
         : <TrendDown size={11} weight="bold" />}
-      <span>{isUp ? '+' : ''}{diff} vs anterior</span>
+      <span>{isUp ? '+' : ''}{diff}</span>
     </span>
   );
 }
@@ -89,7 +88,7 @@ function Trend({ current, previous }) {
 /* ── Card individual ───────────────────────────────────────────── */
 function KpiCard({ config, value, total, previousValue, index, isActive, isAnyActive, onClick }) {
   const { label, sublabel, Icon, colorVar, bgVar, borderVar } = config;
-  const pct     = total > 0 ? Math.round((value / total) * 100) : 0;
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
 
   /* Anima o número de 0 até o valor real */
   const [displayed, setDisplayed] = useState(0);
@@ -145,27 +144,29 @@ function KpiCard({ config, value, total, previousValue, index, isActive, isAnyAc
         </div>
       )}
 
-      {/* Linha superior: ícone + tendência */}
+      {/* ── Linha superior: ícone + porcentagem (esquerda) + tendência (direita) ── */}
       <div className={styles.top}>
-        <div className={styles.iconWrap}>
-          <Icon size={18} weight="bold" />
+        <div className={styles.leftGroup}>
+          <div className={styles.iconWrap}>
+            <Icon size={18} weight="bold" />
+          </div>
+          <span className={styles.pct}>{pct}%</span>
         </div>
         <Trend current={value} previous={previousValue} />
       </div>
 
-      {/* Valor principal */}
-      <div className={styles.valueRow}>
+      {/* ── BigNumber centralizado ── */}
+      <div className={styles.valueCenter}>
         <span className={styles.value}>{displayed}</span>
-        <span className={styles.pct}>{pct}%</span>
       </div>
 
-      {/* Label + sublabel */}
+      {/* ── Label + sublabel ── */}
       <div className={styles.labels}>
         <span className={styles.label}>{label}</span>
         <span className={styles.sublabel}>{sublabel}</span>
       </div>
 
-      {/* Barra de progresso */}
+      {/* ── Barra de progresso ── */}
       <div className={styles.progressTrack}>
         <div
           className={styles.progressFill}
