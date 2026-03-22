@@ -4,6 +4,10 @@
  * Resumo | Histórico | Estatísticas | Alertas & Sensores
  *
  * Ao clicar em "Salvar", abre o ConfirmDialog antes de chamar a API.
+ *
+ * ALTERAÇÃO: colorização das métricas (KPIs rápidos + tab Estatísticas
+ * + tab Alertas & Sensores) agora segue a mesma lógica de keywords dos
+ * alertas usada no MachineCard, em vez de thresholds numéricos fixos.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -33,6 +37,18 @@ import {
 } from '../../utils/machine';
 import ConfirmDialog from '../ConfirmDialog/ConfirmDialog_temp';
 import styles from './MachineModal.module.css';
+
+/* ── Mesmas keywords usadas no MachineCard ─────────────────────── */
+const TEMP_KEYWORDS  = ['temp', 'temperatura', 'thermal', 'superaquec'];
+const POWER_KEYWORDS = ['potência', 'potencia', 'power', 'pico de potência', 'alerta de potência', 'energia'];
+const RPM_KEYWORDS   = ['rpm', 'velocidade', 'vibração', 'vibração alta', 'rotação'];
+
+/** Retorna true se algum alerta ativo contém uma das keywords */
+function alertsMatch(alertas = [], keywords) {
+  return alertas.some((a) =>
+    keywords.some((kw) => a.toLowerCase().includes(kw))
+  );
+}
 
 /* ── Placeholder de imagem da máquina ─────────────────────────── */
 function MachinePlaceholderImage({ name }) {
@@ -76,12 +92,18 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
   const [form, setForm]                 = useState({});
   const [saving, setSaving]             = useState(false);
   const [saveStatus, setSaveStatus]     = useState(null); // 'success' | 'error' | null
-  const [showConfirm, setShowConfirm]   = useState(false); // controla o ConfirmDialog
+  const [showConfirm, setShowConfirm]   = useState(false);
   const overlayRef                      = useRef(null);
 
   const { rpm, potencia, temperatura } = getLatestSensorData(machine);
   const eff       = calcEfficiency(machine);
   const statusCls = getStatusClass(machine.status);
+
+  /* ── Flags de alerta por métrica (mesma lógica do MachineCard) ── */
+  const alertas     = machine.alertas || [];
+  const hasTempAlert  = alertsMatch(alertas, TEMP_KEYWORDS);
+  const hasPowerAlert = alertsMatch(alertas, POWER_KEYWORDS);
+  const hasRpmAlert   = alertsMatch(alertas, RPM_KEYWORDS);
 
   /* Inicializa form */
   useEffect(() => {
@@ -183,11 +205,6 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
               <div className={styles.machineText}>
                 <div className={styles.machineTitle}>
                   <h2 className={styles.machineName}>{machine.codigo}</h2>
-                  {/*
-                    ADIÇÃO 1 — label "Status:" à esquerda do badge existente.
-                    O badge não foi movido nem alterado; apenas envolto num
-                    wrapper flex com o novo label.
-                  */}
                   <div className={styles.statusWithLabel}>
                     <span className={styles.statusInlineLabel}>Status:</span>
                     <span className={`${styles.badge} ${styles[statusCls.replace('status--', 'badge')]}`}>
@@ -209,24 +226,27 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                     {formatDateTime(machine.ultimaAtualizacao)}
                   </span>
                 </div>
+
                 {/*
-                  ADIÇÃO 2 — cada KPI agora tem um label inline à esquerda do valor.
-                  A estrutura interna do .kpi foi expandida: label + valor lado a lado.
+                  Quick KPIs — colorização por alerta (mesma lógica do MachineCard).
+                  kpiDanger → alerta ativo relacionado à métrica
+                  kpiWarn   → atenção ativa relacionada à métrica
+                  (sem alerta = cor padrão)
                 */}
                 <div className={styles.quickKpis}>
-                  <div className={styles.kpi}>
+                  <div className={`${styles.kpi} ${hasRpmAlert ? styles.kpiDanger : ''}`}>
                     <span className={styles.kpiInlineLabel}>
                       <Gauge size={11} weight="bold" /> RPM
                     </span>
                     <span className={styles.kpiVal}>{rpm.toLocaleString('pt-BR')}</span>
                   </div>
-                  <div className={styles.kpi}>
+                  <div className={`${styles.kpi} ${hasPowerAlert ? styles.kpiWarn : ''}`}>
                     <span className={styles.kpiInlineLabel}>
                       <Lightning size={11} weight="bold" /> Watts
                     </span>
                     <span className={styles.kpiVal}>{potencia.toLocaleString('pt-BR')}</span>
                   </div>
-                  <div className={`${styles.kpi} ${temperatura >= 75 ? styles.kpiDanger : temperatura >= 55 ? styles.kpiWarn : ''}`}>
+                  <div className={`${styles.kpi} ${hasTempAlert ? styles.kpiDanger : ''}`}>
                     <span className={styles.kpiInlineLabel}>
                       <Thermometer size={11} weight="bold" /> Temp
                     </span>
@@ -401,16 +421,48 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
             {/* ESTATÍSTICAS */}
             {activeTab === 'Estatísticas' && (
               <div className={styles.tabPane}>
-                {/* ADIÇÃO 3 — título acima do grid de estatísticas */}
                 <h3 className={styles.statsSectionTitle}>Média de Métricas</h3>
                 <div className={styles.statsGrid}>
                   {[
-                    { label: 'Velocidade Média',  val: rpm.toLocaleString('pt-BR'),      unit: 'RPM', color: 'var(--accent)' },
-                    { label: 'Potência Média',     val: potencia.toLocaleString('pt-BR'), unit: 'W',   color: 'var(--info)' },
-                    { label: 'Temperatura Média',  val: `${temperatura}`,                 unit: '°C',  color: temperatura >= 75 ? 'var(--danger)' : 'var(--text-bright)' },
-                    { label: 'Eficiência Geral',   val: `${eff.eficiencia}`,              unit: '%',   color: 'var(--accent)' },
-                    { label: 'Leituras Coletadas', val: (machine.dados?.length || 0).toString(), unit: 'pts', color: 'var(--text-bright)' },
-                    { label: 'Alertas Ativos',     val: (machine.alertas?.length || 0).toString(), unit: '', color: machine.alertas?.length ? 'var(--danger)' : 'var(--accent)' },
+                    {
+                      label: 'Velocidade Média',
+                      val: rpm.toLocaleString('pt-BR'),
+                      unit: 'RPM',
+                      /* Alerta ativo de RPM → danger; sem alerta → cor padrão */
+                      color: hasRpmAlert ? 'var(--danger)' : 'var(--text-bright)',
+                    },
+                    {
+                      label: 'Potência Média',
+                      val: potencia.toLocaleString('pt-BR'),
+                      unit: 'W',
+                      /* Alerta ativo de potência → warning */
+                      color: hasPowerAlert ? 'var(--warning)' : 'var(--info)',
+                    },
+                    {
+                      label: 'Temperatura Média',
+                      val: `${temperatura}`,
+                      unit: '°C',
+                      /* Alerta ativo de temperatura → danger */
+                      color: hasTempAlert ? 'var(--danger)' : 'var(--text-bright)',
+                    },
+                    {
+                      label: 'Eficiência Geral',
+                      val: `${eff.eficiencia}`,
+                      unit: '%',
+                      color: 'var(--accent)',
+                    },
+                    {
+                      label: 'Leituras Coletadas',
+                      val: (machine.dados?.length || 0).toString(),
+                      unit: 'pts',
+                      color: 'var(--text-bright)',
+                    },
+                    {
+                      label: 'Alertas Ativos',
+                      val: (machine.alertas?.length || 0).toString(),
+                      unit: '',
+                      color: machine.alertas?.length ? 'var(--danger)' : 'var(--accent)',
+                    },
                   ].map((s) => (
                     <div key={s.label} className={styles.statCard}>
                       <span className={styles.statLabel}>{s.label}</span>
@@ -448,9 +500,28 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                 <h4 className={styles.sensorsTitle}>Última Leitura de Sensores</h4>
                 <div className={styles.sensorGrid}>
                   {[
-                    { label: 'RPM',         icon: Gauge,       val: rpm.toLocaleString('pt-BR'),       unit: 'RPM', ok: rpm > 0 },
-                    { label: 'Potência',    icon: Lightning,   val: potencia.toLocaleString('pt-BR'),  unit: 'W',   ok: potencia > 0 },
-                    { label: 'Temperatura', icon: Thermometer, val: `${temperatura}°C`,                unit: '',    ok: temperatura < 80 },
+                    {
+                      label: 'RPM',
+                      icon: Gauge,
+                      val: rpm.toLocaleString('pt-BR'),
+                      unit: 'RPM',
+                      /* Alerta de RPM ativo → não OK */
+                      ok: !hasRpmAlert,
+                    },
+                    {
+                      label: 'Potência',
+                      icon: Lightning,
+                      val: potencia.toLocaleString('pt-BR'),
+                      unit: 'W',
+                      ok: !hasPowerAlert,
+                    },
+                    {
+                      label: 'Temperatura',
+                      icon: Thermometer,
+                      val: `${temperatura}°C`,
+                      unit: '',
+                      ok: !hasTempAlert,
+                    },
                   ].map((s) => (
                     <div key={s.label} className={styles.sensorRow}>
                       <span className={styles.sensorIcon}><s.icon size={15} weight="bold" /></span>
