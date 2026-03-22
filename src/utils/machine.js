@@ -2,7 +2,7 @@
  * src/utils/machine.js
  * Funções utilitárias puras para derivar informações de máquinas.
  */
-import { getStatusCategory, CATEGORY_CSS_CLASS } from '../constants/statusMap';
+import { getStatusCategory, CATEGORY_CSS_CLASS, STATUS_SORT_ORDER } from '../constants/statusMap';
 
 /** Mapeamento de status → cor CSS variable (para uso em gráficos/ícones) */
 export const STATUS_COLOR = {
@@ -107,6 +107,19 @@ export function filterMachines(machines, { search = '', local = '' }) {
 /** Extrai lista única de locais */
 export function getLocations(machines) {
   return [...new Set(machines.map((m) => m.local).filter(Boolean))].sort();
+}
+
+/**
+ * Ordena máquinas pela prioridade de exibição:
+ * Em Alerta → Em Atenção → Offline → Operando
+ * Máquinas com o mesmo status mantêm a ordem original (sort estável).
+ */
+export function sortMachines(machines) {
+  return [...machines].sort((a, b) => {
+    const orderA = STATUS_SORT_ORDER[getStatusCategory(a.status)] ?? 99;
+    const orderB = STATUS_SORT_ORDER[getStatusCategory(b.status)] ?? 99;
+    return orderA - orderB;
+  });
 }
 
 /**

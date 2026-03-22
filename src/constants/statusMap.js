@@ -16,7 +16,7 @@ export const STATUS_CATEGORY_MAP = {
 
   // ── Em Alerta ───────────────────────────────────────────────
   'Temp. Alta':         'alerta',
-  'Ferramenta Gasta':       'alerta',
+  'Ferramenta Gasta':   'alerta',
   'Alerta de Potência': 'alerta',
   'Parada':             'alerta',
 
@@ -26,6 +26,17 @@ export const STATUS_CATEGORY_MAP = {
 
   // ── Offline ─────────────────────────────────────────────────
   'Manutenção':         'offline',
+};
+
+/**
+ * Ordem de exibição das categorias no grid de máquinas.
+ * Máquinas problemáticas aparecem primeiro; operando por último.
+ */
+export const STATUS_SORT_ORDER = {
+  alerta:   0,
+  atencao:  1,
+  offline:  2,
+  operando: 3,
 };
 
 /**

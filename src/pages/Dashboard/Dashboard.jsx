@@ -9,7 +9,7 @@ import AlertPanel   from '../../components/AlertPanel/AlertPanel';
 import FilterBar    from '../../components/FilterBar/FilterBar';
 import MachineModal from '../../components/MachineModal/MachineModal';
 import { LoadingState, ErrorState, EmptyState } from '../../components/StateViews/StateViews';
-import { groupByStatus, filterMachines, getLocations } from '../../utils/machine';
+import { groupByStatus, filterMachines, getLocations, sortMachines } from '../../utils/machine';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard({
@@ -28,16 +28,19 @@ export default function Dashboard({
   const counts    = useMemo(() => groupByStatus(machines), [machines]);
   const locations = useMemo(() => getLocations(machines),  [machines]);
 
-  /* Filtra por texto + local + categoria KPI (statusFilter) */
-  const filtered  = useMemo(() => {
+  /**
+   * Pipeline: filtra por texto + local + categoria KPI,
+   * depois ordena por prioridade (alerta → atenção → offline → operando).
+   */
+  const filtered = useMemo(() => {
     let list = filterMachines(machines, { search, local: localFilter });
+
     if (statusFilter) {
-      list = list.filter((m) => {
-        const { getStatusCategory } = require('../../constants/statusMap');
-        return getStatusCategory(m.status) === statusFilter;
-      });
+      const { getStatusCategory } = require('../../constants/statusMap');
+      list = list.filter((m) => getStatusCategory(m.status) === statusFilter);
     }
-    return list;
+
+    return sortMachines(list);
   }, [machines, search, localFilter, statusFilter]);
 
   /* Alterna o filtro: clique no mesmo card remove o filtro */
