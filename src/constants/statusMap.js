@@ -18,13 +18,13 @@ export const STATUS_CATEGORY_MAP = {
   'Temp. Alta':         'alerta',
   'Ferramenta Gasta':       'alerta',
   'Alerta de Potência': 'alerta',
+  'Parada':             'alerta',
 
   // ── Em Atenção ──────────────────────────────────────────────
   'Baixa Produção':     'atencao',
   'Vibração Alta':      'atencao',
 
   // ── Offline ─────────────────────────────────────────────────
-  'Parada':             'offline',
   'Manutenção':         'offline',
 };
 
