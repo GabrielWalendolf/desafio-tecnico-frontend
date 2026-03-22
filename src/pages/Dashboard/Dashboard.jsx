@@ -66,7 +66,7 @@ export default function Dashboard({
       {statusFilter && (
         <div className={styles.filterPill}>
           <span className={styles.filterPillLabel}>
-            Filtrando por: <strong>{
+            Filtrado por: <strong>{
               { operando: 'Operando', alerta: 'Em Alerta', atencao: 'Em Atenção', offline: 'Offline' }[statusFilter]
             }</strong>
           </span>

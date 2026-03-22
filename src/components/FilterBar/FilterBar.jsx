@@ -51,7 +51,7 @@ export default function FilterBar({ search, onSearch, local, onLocal, locations,
       <span className={styles.counter}>
         {filtered === total
           ? `${total} máquinas`
-          : `${filtered} de ${total}`}
+          : `${filtered} de ${total} máquinas`}
       </span>
     </div>
   );

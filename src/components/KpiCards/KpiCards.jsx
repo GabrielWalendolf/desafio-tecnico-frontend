@@ -141,7 +141,7 @@ function KpiCard({ config, value, total, previousValue, index, isActive, isAnyAc
       {/* Indicador de filtro ativo */}
       {isActive && (
         <div className={styles.activeIndicator}>
-          <span>Filtrando</span>
+          <span>Filtrado</span>
         </div>
       )}
 
