@@ -183,9 +183,17 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
               <div className={styles.machineText}>
                 <div className={styles.machineTitle}>
                   <h2 className={styles.machineName}>{machine.codigo}</h2>
-                  <span className={`${styles.badge} ${styles[statusCls.replace('status--', 'badge')]}`}>
-                    {machine.status}
-                  </span>
+                  {/*
+                    ADIÇÃO 1 — label "Status:" à esquerda do badge existente.
+                    O badge não foi movido nem alterado; apenas envolto num
+                    wrapper flex com o novo label.
+                  */}
+                  <div className={styles.statusWithLabel}>
+                    <span className={styles.statusInlineLabel}>Status:</span>
+                    <span className={`${styles.badge} ${styles[statusCls.replace('status--', 'badge')]}`}>
+                      {machine.status}
+                    </span>
+                  </div>
                 </div>
                 <div className={styles.machineMeta}>
                   <span>
@@ -201,23 +209,28 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                     {formatDateTime(machine.ultimaAtualizacao)}
                   </span>
                 </div>
-                {/* KPIs rápidos */}
+                {/*
+                  ADIÇÃO 2 — cada KPI agora tem um label inline à esquerda do valor.
+                  A estrutura interna do .kpi foi expandida: label + valor lado a lado.
+                */}
                 <div className={styles.quickKpis}>
                   <div className={styles.kpi}>
+                    <span className={styles.kpiInlineLabel}>
+                      <Gauge size={11} weight="bold" /> RPM
+                    </span>
                     <span className={styles.kpiVal}>{rpm.toLocaleString('pt-BR')}</span>
-                    <span className={styles.kpiLbl}>RPM</span>
                   </div>
                   <div className={styles.kpi}>
+                    <span className={styles.kpiInlineLabel}>
+                      <Lightning size={11} weight="bold" /> Watts
+                    </span>
                     <span className={styles.kpiVal}>{potencia.toLocaleString('pt-BR')}</span>
-                    <span className={styles.kpiLbl}>Watts</span>
                   </div>
                   <div className={`${styles.kpi} ${temperatura >= 75 ? styles.kpiDanger : temperatura >= 55 ? styles.kpiWarn : ''}`}>
+                    <span className={styles.kpiInlineLabel}>
+                      <Thermometer size={11} weight="bold" /> Temp
+                    </span>
                     <span className={styles.kpiVal}>{temperatura}°C</span>
-                    <span className={styles.kpiLbl}>Temp</span>
-                  </div>
-                  <div className={styles.kpi}>
-                    <span className={styles.kpiVal}>{eff.eficiencia}%</span>
-                    <span className={styles.kpiLbl}>Eficiência</span>
                   </div>
                 </div>
               </div>
@@ -306,7 +319,6 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                             <ArrowCounterClockwise size={13} weight="bold" />
                             Cancelar
                           </button>
-                          {/* Abre o ConfirmDialog em vez de salvar direto */}
                           <button
                             className={styles.saveBtn}
                             onClick={handleSaveRequest}
@@ -389,6 +401,8 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
             {/* ESTATÍSTICAS */}
             {activeTab === 'Estatísticas' && (
               <div className={styles.tabPane}>
+                {/* ADIÇÃO 3 — título acima do grid de estatísticas */}
+                <h3 className={styles.statsSectionTitle}>Média de Métricas</h3>
                 <div className={styles.statsGrid}>
                   {[
                     { label: 'Velocidade Média',  val: rpm.toLocaleString('pt-BR'),      unit: 'RPM', color: 'var(--accent)' },
