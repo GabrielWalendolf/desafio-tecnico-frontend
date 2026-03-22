@@ -1,5 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
    KpiCards.module.css — tokens via CSS vars (light + dark)
+   Background colorido (tinted) por padrão;
+   hover destaca borda + sombra colorida sem mudar o bg.
    ══════════════════════════════════════════════════════════════ */
 
 .grid {
@@ -10,8 +12,9 @@
 
 .card {
   position: relative;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  /* Background já tintado com a cor do KPI */
+  background: var(--bg);
+  border: 1px solid var(--border-c);
   border-radius: 10px;
   padding: 1.125rem 1.125rem 1rem;
   display: flex;
@@ -20,15 +23,22 @@
   overflow: hidden;
   animation: cardIn 0.4s ease both;
   cursor: pointer;
-  /* Sombra padrão sempre visível */
   box-shadow: var(--shadow-card);
-  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease, background-color 220ms ease, opacity 200ms ease;
+  transition:
+    box-shadow    200ms ease,
+    transform     200ms ease,
+    border-color  200ms ease,
+    opacity       200ms ease;
 }
 
+/* Hover: borda mais viva + sombra colorida + subida */
 .card:hover {
-  box-shadow: 0 6px 24px rgba(0,0,0,.14);
-  transform: translateY(-2px);
-  border-color: var(--border-c);
+  border-color: var(--color);
+  box-shadow:
+    0 0 0 2px var(--border-c),
+    0 8px 28px color-mix(in srgb, var(--color) 22%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
 }
 
 .card:focus-visible {
@@ -40,18 +50,21 @@
 .cardActive {
   border-color: var(--color) !important;
   background: var(--bg) !important;
-  box-shadow: 0 0 0 2px var(--border-c), 0 6px 20px rgba(0,0,0,.12) !important;
-  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 2px var(--border-c),
+    0 8px 28px color-mix(in srgb, var(--color) 28%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.12) !important;
+  transform: translateY(-4px);
 }
 
-/* ── Cards não selecionados quando há um filtro ativo ── */
+/* ── Cards não selecionados quando há filtro ativo ── */
 .cardDimmed {
   opacity: 0.45;
   filter: grayscale(30%);
 }
 
 .cardDimmed:hover {
-  opacity: 0.7;
+  opacity: 0.75;
   filter: grayscale(0%);
 }
 
@@ -97,7 +110,8 @@
   width: 36px;
   height: 36px;
   border-radius: 8px;
-  background: var(--bg);
+  /* Ícone levemente mais contrastado sobre o bg tintado */
+  background: color-mix(in srgb, var(--color) 14%, transparent);
   border: 1px solid var(--border-c);
   display: flex;
   align-items: center;
@@ -118,9 +132,9 @@
   border-radius: 20px;
   white-space: nowrap;
 }
-.trendUp      { background: rgba(207, 34, 46, 0.08); color: var(--kpi-danger); }
-.trendDown    { background: rgba(45, 164, 78, 0.08);  color: var(--kpi-ok); }
-.trendNeutral { background: var(--bg-elevated);        color: var(--muted); }
+.trendUp      { background: rgba(207, 34, 46, 0.10); color: var(--kpi-danger); }
+.trendDown    { background: rgba(45, 164, 78, 0.10);  color: var(--kpi-ok); }
+.trendNeutral { background: rgba(0, 0, 0, 0.06);       color: var(--muted); }
 
 /* Valor + porcentagem */
 .valueRow {
@@ -143,7 +157,7 @@
   font-size: 0.8125rem;
   font-weight: 500;
   color: var(--color);
-  background: var(--bg);
+  background: color-mix(in srgb, var(--color) 12%, transparent);
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
   line-height: 1.4;
@@ -169,7 +183,7 @@
 /* Barra de progresso */
 .progressTrack {
   height: 4px;
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--color) 15%, transparent);
   border-radius: 4px;
   overflow: hidden;
   margin-top: 0.125rem;

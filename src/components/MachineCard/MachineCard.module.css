@@ -14,8 +14,11 @@
 
 .card:hover {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px var(--accent-glow), 0 6px 20px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 2px var(--accent-glow),
+    0 10px 32px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 3px 10px rgba(0, 0, 0, 0.14);
+  transform: translateY(-5px);
 }
 
 .card:focus-visible {
@@ -173,10 +176,11 @@
   letter-spacing: 0.08em;
   color: var(--muted);
   line-height: 1;
+  flex-shrink: 0;
+  padding-top: 0.2rem; /* alinha visualmente com as tags */
 }
 
 .alerts {
-  min-height: 22px;
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
