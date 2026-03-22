@@ -1,0 +1,198 @@
+/* ══════════════════════════════════════════════════════════════
+   ConfirmDialog.module.css
+   Pop-up de confirmação de edição
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Overlay ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  /* Aparece sobre o modal principal (z-index 200) */
+  z-index: 300;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Caixa do diálogo ── */
+.dialog {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 2rem 1.75rem 1.5rem;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.30), 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0);   }
+}
+
+/* ── Ícone ── */
+.iconWrap {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--warning-dim);
+  border: 1px solid rgba(183, 110, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+/* ── Título ── */
+.title {
+  font-family: var(--font-heading);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+/* ── Mensagem ── */
+.message {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.messageSub {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* ── Lista de campos ── */
+.fieldList {
+  list-style: none;
+  width: 100%;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.fieldItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.8125rem;
+}
+
+.fieldItem:last-child {
+  border-bottom: none;
+}
+
+.fieldLabel {
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: capitalize;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.fieldValue {
+  color: var(--text-bright);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Botões ── */
+.actions {
+  display: flex;
+  gap: 0.625rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+/* Cancelar — vermelho, pré-selecionado */
+.cancelBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1rem;
+  background: var(--danger-dim);
+  border: 2px solid var(--danger);          /* borda destacada = foco visual */
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: background 150ms ease, box-shadow 150ms ease;
+  /* Ring de foco (para o autofocus) */
+  outline: none;
+}
+
+.cancelBtn:focus-visible,
+.cancelBtn:focus {
+  box-shadow: 0 0 0 3px rgba(207, 34, 46, 0.30);
+}
+
+.cancelBtn:hover {
+  background: rgba(207, 34, 46, 0.18);
+}
+
+/* Salvar — cinza neutro com hover verde */
+.saveBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.625rem 1rem;
+  background: var(--bg-elevated);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+  outline: none;
+}
+
+.saveBtn:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Hover verde */
+.saveBtn:hover {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent-glow);
+}
+
+/* ── Dark mode ajuste do ícone ── */
+[data-theme="dark"] .iconWrap {
+  background: rgba(210, 153, 34, 0.10);
+  border-color: rgba(210, 153, 34, 0.22);
+}
