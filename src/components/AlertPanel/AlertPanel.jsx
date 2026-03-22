@@ -4,9 +4,14 @@
  */
 import React from 'react';
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { countAlerts, getStatusColor, formatDateTime } from '../../utils/machine';
+import {
+  WarningOctagon,
+  ChartDonut,
+  Wrench,
+} from '@phosphor-icons/react';
+import { countAlerts, formatDateTime } from '../../utils/machine';
 import styles from './AlertPanel.module.css';
 
 const DONUT_COLORS = [
@@ -29,8 +34,8 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 export default function AlertPanel({ machines }) {
-  const alertData  = countAlerts(machines);
-  const criticals  = machines
+  const alertData = countAlerts(machines);
+  const criticals = machines
     .filter((m) => m.alertas?.length > 0)
     .sort((a, b) => b.alertas.length - a.alertas.length)
     .slice(0, 5);
@@ -39,12 +44,15 @@ export default function AlertPanel({ machines }) {
 
   return (
     <aside className={styles.panel}>
+
       {/* Alertas críticos */}
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          <span className={styles.dot} />
+        <div className={styles.sectionTitle}>
+          <span className={styles.titleIcon} style={{ color: 'var(--danger)' }}>
+            <WarningOctagon size={14} weight="fill" />
+          </span>
           Alertas Críticos
-        </h2>
+        </div>
         {criticals.length === 0 ? (
           <p className={styles.empty}>Nenhum alerta ativo.</p>
         ) : (
@@ -71,10 +79,12 @@ export default function AlertPanel({ machines }) {
 
       {/* Donut chart */}
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          <span className={styles.dot} />
+        <div className={styles.sectionTitle}>
+          <span className={styles.titleIcon} style={{ color: 'var(--info)' }}>
+            <ChartDonut size={14} weight="fill" />
+          </span>
           Distribuição de Alertas
-        </h2>
+        </div>
         {!hasAlerts ? (
           <p className={styles.empty}>Sem alertas para exibir.</p>
         ) : (
@@ -116,12 +126,14 @@ export default function AlertPanel({ machines }) {
         )}
       </section>
 
-      {/* Previsão de manutenção (estático / placeholder) */}
+      {/* Próximas manutenções */}
       <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>
-          <span className={styles.dot} />
+        <div className={styles.sectionTitle}>
+          <span className={styles.titleIcon} style={{ color: 'var(--warning)' }}>
+            <Wrench size={14} weight="fill" />
+          </span>
           Próximas Manutenções
-        </h2>
+        </div>
         <ul className={styles.maintList}>
           {machines.slice(0, 3).map((m) => (
             <li key={m.id} className={styles.maintItem}>
@@ -131,6 +143,7 @@ export default function AlertPanel({ machines }) {
           ))}
         </ul>
       </section>
+
     </aside>
   );
 }
