@@ -66,9 +66,8 @@ export default function Navbar({
   };
 
   const navItems = [
-    { label: 'Dashboard',     icon: SquaresFour },
-    { label: 'Relatórios',    icon: ChartBar },
-    { label: 'Configurações', icon: Gear },
+    { label: 'Dashboard',  icon: SquaresFour },
+    { label: 'Relatórios', icon: ChartBar },
   ];
 
   return (
@@ -96,10 +95,7 @@ export default function Navbar({
                 icon={item.icon}
                 label={item.label}
                 active={activeNav === item.label}
-                onClick={() => {
-                  setActiveNav(item.label);
-                  if (item.label === 'Configurações') handleOpenPrefs();
-                }}
+                onClick={() => setActiveNav(item.label)}
               />
             ))}
           </nav>
@@ -236,11 +232,7 @@ export default function Navbar({
                 icon={item.icon}
                 label={item.label}
                 active={activeNav === item.label}
-                onClick={() => {
-                  setActiveNav(item.label);
-                  setMobileOpen(false);
-                  if (item.label === 'Configurações') handleOpenPrefs();
-                }}
+                onClick={() => { setActiveNav(item.label); setMobileOpen(false); }}
               />
             ))}
           </nav>
