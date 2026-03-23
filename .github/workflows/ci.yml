@@ -1,0 +1,67 @@
+name: CI — ECO+ Machines
+
+# Dispara o workflow a cada push ou pull request nas branches main e develop
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ── Job 1: Testes e Build ──────────────────────────────────────
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Faz o checkout do repositório
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # 2. Configura o Node.js na versão 18
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      # 3. Instala as dependências
+      - name: Instalar dependências
+        run: npm ci
+
+      # 4. Roda os testes (quando existirem)
+      - name: Rodar testes
+        run: npm test -- --watchAll=false --passWithNoTests
+        env:
+          CI: true
+
+      # 5. Faz o build de produção
+      - name: Build de produção
+        run: npm run build
+        env:
+          REACT_APP_API_BASE_URL: ${{ secrets.REACT_APP_API_BASE_URL }}
+          REACT_APP_API_USER: ${{ secrets.REACT_APP_API_USER }}
+          REACT_APP_API_PASS: ${{ secrets.REACT_APP_API_PASS }}
+          REACT_APP_API_KEY: ${{ secrets.REACT_APP_API_KEY }}
+
+  # ── Job 2: Validação do Docker ─────────────────────────────────
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: build-and-test  # Só roda se o Job 1 passar
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      # Cria um .env temporário para o build do Docker
+      - name: Criar .env temporário
+        run: |
+          echo "REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}" >> .env
+          echo "REACT_APP_API_USER=${{ secrets.REACT_APP_API_USER }}" >> .env
+          echo "REACT_APP_API_PASS=${{ secrets.REACT_APP_API_PASS }}" >> .env
+          echo "REACT_APP_API_KEY=${{ secrets.REACT_APP_API_KEY }}" >> .env
+
+      # Verifica se a imagem Docker constrói sem erros
+      - name: Build da imagem Docker
+        run: docker build -t ecoplus-machines .

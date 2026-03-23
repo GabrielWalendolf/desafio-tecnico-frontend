@@ -1,0 +1,19 @@
+services:
+  app:
+    container_name: ecoplus-machines
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Passa as variáveis DURANTE o build
+      # O React (CRA) as incorpora no bundle estático em tempo de compilação
+      args:
+        - REACT_APP_API_BASE_URL=${REACT_APP_API_BASE_URL}
+        - REACT_APP_API_USER=${REACT_APP_API_USER}
+        - REACT_APP_API_PASS=${REACT_APP_API_PASS}
+        - REACT_APP_API_KEY=${REACT_APP_API_KEY}
+
+    ports:
+      - "3000:80"
+
+    restart: unless-stopped
