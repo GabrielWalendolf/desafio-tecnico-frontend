@@ -5,7 +5,7 @@ import React from 'react';
 import {
   PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer,
 } from 'recharts';
-import { Warning, ChartDonut, Wrench } from '@phosphor-icons/react';
+import { Warning, ChartDonut } from '@phosphor-icons/react';
 import { countAlerts, formatDateTime } from '../../utils/machine';
 import { Machine, AlertChartEntry } from '../../types';
 import styles from './AlertPanel.module.css';
@@ -126,23 +126,6 @@ export default function AlertPanel({ machines }: AlertPanelProps): React.ReactEl
             </div>
           </>
         )}
-      </section>
-
-      <section className={styles.section}>
-        <div className={styles.sectionTitle}>
-          <span className={styles.titleIcon} style={{ color: 'var(--warning)' }}>
-            <Wrench size={14} weight="fill" />
-          </span>
-          Próximas Manutenções
-        </div>
-        <ul className={styles.maintList}>
-          {machines.slice(0, 3).map((m) => (
-            <li key={m.id} className={styles.maintItem}>
-              <span className={styles.maintName}>{m.codigo}</span>
-              <span className={styles.maintDate}>Agendada</span>
-            </li>
-          ))}
-        </ul>
       </section>
     </aside>
   );

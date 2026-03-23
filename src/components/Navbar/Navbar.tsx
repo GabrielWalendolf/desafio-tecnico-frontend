@@ -1,5 +1,6 @@
 /**
  * src/components/Navbar/Navbar.tsx
+ * Adicionados props `activePage` e `onNavChange` para controle externo de rota.
  */
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -35,6 +36,10 @@ interface NavbarProps {
   loading: boolean;
   lastFetch: Date | null;
   alertCount?: number;
+  /** Página atualmente ativa (controlada externamente). */
+  activePage?: string;
+  /** Callback chamado quando o usuário clica em um item de navegação. */
+  onNavChange?: (page: string) => void;
 }
 
 export default function Navbar({
@@ -42,13 +47,25 @@ export default function Navbar({
   loading,
   lastFetch,
   alertCount = 0,
+  activePage,
+  onNavChange,
 }: NavbarProps): React.ReactElement {
-  const [activeNav, setActiveNav]   = useState<string>('Dashboard');
-  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
-  const [bellOpen, setBellOpen]     = useState<boolean>(false);
-  const [userOpen, setUserOpen]     = useState<boolean>(false);
-  const [prefsOpen, setPrefsOpen]   = useState<boolean>(false);
-  const userRef                     = useRef<HTMLDivElement>(null);
+  // Estado interno como fallback quando não há controle externo
+  const [internalNav, setInternalNav] = useState<string>('Dashboard');
+  const [mobileOpen, setMobileOpen]   = useState<boolean>(false);
+  const [bellOpen, setBellOpen]       = useState<boolean>(false);
+  const [userOpen, setUserOpen]       = useState<boolean>(false);
+  const [prefsOpen, setPrefsOpen]     = useState<boolean>(false);
+  const userRef                       = useRef<HTMLDivElement>(null);
+
+  // Usa o prop externo se fornecido, caso contrário usa estado interno
+  const currentPage = activePage ?? internalNav;
+
+  const handleNavClick = (label: string) => {
+    setInternalNav(label);
+    onNavChange?.(label);
+    setMobileOpen(false);
+  };
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -94,8 +111,8 @@ export default function Navbar({
                 key={item.label}
                 icon={item.icon}
                 label={item.label}
-                active={activeNav === item.label}
-                onClick={() => setActiveNav(item.label)}
+                active={currentPage === item.label}
+                onClick={() => handleNavClick(item.label)}
               />
             ))}
           </nav>
@@ -231,8 +248,8 @@ export default function Navbar({
                 key={item.label}
                 icon={item.icon}
                 label={item.label}
-                active={activeNav === item.label}
-                onClick={() => { setActiveNav(item.label); setMobileOpen(false); }}
+                active={currentPage === item.label}
+                onClick={() => handleNavClick(item.label)}
               />
             ))}
           </nav>
