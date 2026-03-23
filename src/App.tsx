@@ -1,17 +1,15 @@
 /**
- * src/App.js
+ * src/App.tsx
  * Componente raiz da aplicação ECO+ Machines.
- * Conecta o hook de dados com os componentes de layout.
  */
 import React, { useMemo } from 'react';
 import Navbar    from './components/Navbar/Navbar';
 import Dashboard from './pages/Dashboard/Dashboard';
 import { useMachines } from './hooks/useMachines';
 
-export default function App() {
+export default function App(): React.ReactElement {
   const { machines, loading, error, refetch, update, lastFetch, previousCounts } = useMachines();
 
-  /* Conta máquinas com pelo menos 1 alerta ativo */
   const alertCount = useMemo(
     () => machines.filter((m) => m.alertas?.length > 0).length,
     [machines]

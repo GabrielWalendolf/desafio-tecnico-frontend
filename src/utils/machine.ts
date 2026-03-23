@@ -1,11 +1,21 @@
 /**
- * src/utils/machine.js
+ * src/utils/machine.ts
  * Funções utilitárias puras para derivar informações de máquinas.
  */
-import { getStatusCategory, CATEGORY_CSS_CLASS, STATUS_SORT_ORDER } from '../constants/statusMap';
+import {
+  getStatusCategory,
+  CATEGORY_CSS_CLASS,
+  STATUS_SORT_ORDER,
+} from '../constants/statusMap';
+import {
+  Machine,
+  SensorReading,
+  StatusCounts,
+  AlertChartEntry,
+  EfficiencyData,
+} from '../types';
 
-/** Mapeamento de status → cor CSS variable (para uso em gráficos/ícones) */
-export const STATUS_COLOR = {
+export const STATUS_COLOR: Record<string, string> = {
   'Operando':           'var(--accent)',
   'Alerta':             'var(--danger)',
   'Temp. Alta':         'var(--danger)',
@@ -17,42 +27,31 @@ export const STATUS_COLOR = {
   'Manutenção':         'var(--muted)',
 };
 
-export function getStatusColor(status) {
+export function getStatusColor(status: string): string {
   return STATUS_COLOR[status] ?? 'var(--muted)';
 }
 
-/**
- * Retorna a classe CSS de badge/dot para um status.
- * Delega a categorização ao statusMap.
- */
-export function getStatusClass(status) {
+export function getStatusClass(status: string): string {
   const category = getStatusCategory(status);
   return CATEGORY_CSS_CLASS[category];
 }
 
-/**
- * Extrai o último registro de sensores de `dados[]`.
- * Retorna { rpm, potencia, temperatura } ou zeros.
- */
-export function getLatestSensorData(machine) {
+export function getLatestSensorData(machine: Machine): SensorReading {
   const dados = machine?.dados;
   if (!Array.isArray(dados) || dados.length === 0) {
-    return { rpm: 0, potencia: 0, temperatura: 0 };
+    return { timestamp: '', rpm: 0, potencia: 0, temperatura: 0 };
   }
   const last = dados[dados.length - 1];
   return {
+    timestamp:   last.timestamp   ?? '',
     rpm:         last.rpm         ?? 0,
     potencia:    last.potencia    ?? 0,
     temperatura: last.temperatura ?? 0,
   };
 }
 
-/**
- * Agrupa máquinas por categoria KPI para os cards do dashboard.
- * Usa getStatusCategory (via statusMap) como fonte única de verdade.
- */
-export function groupByStatus(machines) {
-  return machines.reduce(
+export function groupByStatus(machines: Machine[]): StatusCounts {
+  return machines.reduce<StatusCounts>(
     (acc, m) => {
       const category = getStatusCategory(m.status);
       acc[category] = (acc[category] ?? 0) + 1;
@@ -62,11 +61,8 @@ export function groupByStatus(machines) {
   );
 }
 
-/**
- * Conta a frequência de cada tipo de alerta para o donut chart.
- */
-export function countAlerts(machines) {
-  const counts = {};
+export function countAlerts(machines: Machine[]): AlertChartEntry[] {
+  const counts: Record<string, number> = {};
   machines.forEach((m) => {
     (m.alertas || []).forEach((a) => {
       counts[a] = (counts[a] || 0) + 1;
@@ -75,16 +71,14 @@ export function countAlerts(machines) {
   return Object.entries(counts).map(([name, value]) => ({ name, value }));
 }
 
-/** Formata timestamp ISO para horário legível */
-export function formatTime(iso) {
+export function formatTime(iso: string | null | undefined): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleTimeString('pt-BR', {
     hour: '2-digit', minute: '2-digit',
   });
 }
 
-/** Formata timestamp ISO para data + horário */
-export function formatDateTime(iso) {
+export function formatDateTime(iso: string | null | undefined): string {
   if (!iso) return '—';
   return new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
@@ -92,29 +86,25 @@ export function formatDateTime(iso) {
   });
 }
 
-/**
- * Filtra máquinas por texto (nome/codigo/local) e por local selecionado.
- */
-export function filterMachines(machines, { search = '', local = '' }) {
+export interface FilterOptions {
+  search?: string;
+  local?: string;
+}
+
+export function filterMachines(machines: Machine[], { search = '', local = '' }: FilterOptions): Machine[] {
   return machines.filter((m) => {
-    const hay = `${m.codigo} ${m.nome || ''} ${m.local}`.toLowerCase();
+    const hay = `${m.codigo} ${m.nome ?? ''} ${m.local}`.toLowerCase();
     const matchSearch = !search || hay.includes(search.toLowerCase());
     const matchLocal  = !local  || m.local === local;
     return matchSearch && matchLocal;
   });
 }
 
-/** Extrai lista única de locais */
-export function getLocations(machines) {
+export function getLocations(machines: Machine[]): string[] {
   return [...new Set(machines.map((m) => m.local).filter(Boolean))].sort();
 }
 
-/**
- * Ordena máquinas pela prioridade de exibição:
- * Em Alerta → Em Atenção → Offline → Operando
- * Máquinas com o mesmo status mantêm a ordem original (sort estável).
- */
-export function sortMachines(machines) {
+export function sortMachines(machines: Machine[]): Machine[] {
   return [...machines].sort((a, b) => {
     const orderA = STATUS_SORT_ORDER[getStatusCategory(a.status)] ?? 99;
     const orderB = STATUS_SORT_ORDER[getStatusCategory(b.status)] ?? 99;
@@ -122,11 +112,7 @@ export function sortMachines(machines) {
   });
 }
 
-/**
- * Calcula métricas de eficiência a partir do histórico de dados.
- * Retorna porcentagens de tempo em cada estado (mock baseado nos alertas).
- */
-export function calcEfficiency(machine) {
+export function calcEfficiency(machine: Machine): EfficiencyData {
   const alertCount = (machine?.alertas || []).length;
   const operando   = Math.max(0, 100 - alertCount * 12);
   return {

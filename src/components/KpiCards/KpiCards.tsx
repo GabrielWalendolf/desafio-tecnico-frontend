@@ -1,11 +1,5 @@
 /**
- * src/components/KpiCards/KpiCards.jsx
- *
- * Layout alterado:
- *  - Porcentagem ocupa o topo (onde ficava o bigNumber)
- *  - BigNumber centralizado no corpo do card
- *  - Tendência permanece ao lado da porcentagem
- *  - Clique filtra o grid de máquinas pelo status correspondente
+ * src/components/KpiCards/KpiCards.tsx
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -17,10 +11,20 @@ import {
   TrendDown,
   Minus,
 } from '@phosphor-icons/react';
+import { StatusCounts } from '../../types';
 import styles from './KpiCards.module.css';
 
-/* ── Configuração de cada card ─────────────────────────────────── */
-const CARDS = [
+interface CardConfig {
+  key: keyof StatusCounts;
+  label: string;
+  sublabel: string;
+  Icon: React.ElementType;
+  colorVar: string;
+  bgVar: string;
+  borderVar: string;
+}
+
+const CARDS: CardConfig[] = [
   {
     key:       'operando',
     label:     'Operando',
@@ -59,8 +63,12 @@ const CARDS = [
   },
 ];
 
-/* ── Componente de tendência ───────────────────────────────────── */
-function Trend({ current, previous }) {
+interface TrendProps {
+  current: number;
+  previous: number | null | undefined;
+}
+
+function Trend({ current, previous }: TrendProps): React.ReactElement | null {
   if (previous === null || previous === undefined) return null;
 
   const diff = current - previous;
@@ -85,33 +93,56 @@ function Trend({ current, previous }) {
   );
 }
 
-/* ── Card individual ───────────────────────────────────────────── */
-function KpiCard({ config, value, total, previousValue, index, isActive, isAnyActive, onClick }) {
+interface KpiCardProps {
+  config: CardConfig;
+  value: number;
+  total: number;
+  previousValue: number | undefined;
+  index: number;
+  isActive: boolean;
+  isAnyActive: boolean;
+  onClick: (key: keyof StatusCounts) => void;
+}
+
+function KpiCard({
+  config,
+  value,
+  total,
+  previousValue,
+  index,
+  isActive,
+  isAnyActive,
+  onClick,
+}: KpiCardProps): React.ReactElement {
   const { label, sublabel, Icon, colorVar, bgVar, borderVar } = config;
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
 
-  /* Anima o número de 0 até o valor real */
-  const [displayed, setDisplayed] = useState(0);
-  const rafRef = useRef(null);
+  const [displayed, setDisplayed] = useState<number>(0);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
-    const start     = 0;
     const end       = value;
     const duration  = 600;
     const startTime = performance.now();
 
-    const animate = (now) => {
+    const animate = (now: number) => {
       const elapsed  = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // easeOutCubic
       const ease     = 1 - Math.pow(1 - progress, 3);
-      setDisplayed(Math.round(start + (end - start) * ease));
+      setDisplayed(Math.round(end * ease));
       if (progress < 1) rafRef.current = requestAnimationFrame(animate);
     };
 
     rafRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafRef.current);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [value]);
+
+  const styleVars = {
+    '--color':    `var(${colorVar})`,
+    '--bg':       `var(${bgVar})`,
+    '--border-c': `var(${borderVar})`,
+    animationDelay: `${index * 80}ms`,
+  } as React.CSSProperties;
 
   return (
     <article
@@ -120,12 +151,7 @@ function KpiCard({ config, value, total, previousValue, index, isActive, isAnyAc
         ${isActive ? styles.cardActive : ''}
         ${isAnyActive && !isActive ? styles.cardDimmed : ''}
       `}
-      style={{
-        '--color':    `var(${colorVar})`,
-        '--bg':       `var(${bgVar})`,
-        '--border-c': `var(${borderVar})`,
-        animationDelay: `${index * 80}ms`,
-      }}
+      style={styleVars}
       onClick={() => onClick(config.key)}
       role="button"
       tabIndex={0}
@@ -134,17 +160,14 @@ function KpiCard({ config, value, total, previousValue, index, isActive, isAnyAc
       aria-label={`Filtrar por ${label}`}
       title={isActive ? `Clique para remover o filtro de ${label}` : `Clique para filtrar por ${label}`}
     >
-      {/* Barra de acento lateral */}
       <div className={styles.accentBar} />
 
-      {/* Indicador de filtro ativo */}
       {isActive && (
         <div className={styles.activeIndicator}>
           <span>Filtrado</span>
         </div>
       )}
 
-      {/* ── Linha superior: ícone + porcentagem (esquerda) + tendência (direita) ── */}
       <div className={styles.top}>
         <div className={styles.leftGroup}>
           <div className={styles.iconWrap}>
@@ -155,18 +178,15 @@ function KpiCard({ config, value, total, previousValue, index, isActive, isAnyAc
         <Trend current={value} previous={previousValue} />
       </div>
 
-      {/* ── BigNumber centralizado ── */}
       <div className={styles.valueCenter}>
         <span className={styles.value}>{displayed}</span>
       </div>
 
-      {/* ── Label + sublabel ── */}
       <div className={styles.labels}>
         <span className={styles.label}>{label}</span>
         <span className={styles.sublabel}>{sublabel}</span>
       </div>
 
-      {/* ── Barra de progresso ── */}
       <div className={styles.progressTrack}>
         <div
           className={styles.progressFill}
@@ -181,8 +201,21 @@ function KpiCard({ config, value, total, previousValue, index, isActive, isAnyAc
   );
 }
 
-/* ── Export principal ──────────────────────────────────────────── */
-export default function KpiCards({ counts, total, previousCounts, activeFilter, onCardClick }) {
+interface KpiCardsProps {
+  counts: StatusCounts;
+  total: number;
+  previousCounts: StatusCounts | null;
+  activeFilter: keyof StatusCounts | null;
+  onCardClick: (key: keyof StatusCounts) => void;
+}
+
+export default function KpiCards({
+  counts,
+  total,
+  previousCounts,
+  activeFilter,
+  onCardClick,
+}: KpiCardsProps): React.ReactElement {
   return (
     <div className={styles.grid}>
       {CARDS.map((card, i) => (

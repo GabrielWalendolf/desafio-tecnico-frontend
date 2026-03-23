@@ -1,12 +1,12 @@
 /**
- * src/components/MachineCard/MachineCard.test.jsx
- * Testes do componente MachineCard.
+ * src/components/MachineCard/MachineCard.test.tsx
  */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import MachineCard from './MachineCard';
+import { Machine } from '../../types';
 
-const makeMachine = (overrides = {}) => ({
+const makeMachine = (overrides: Partial<Machine> = {}): Machine => ({
   id: 1,
   codigo: 'Torno CNC 101',
   local: 'Setor A',
@@ -37,9 +37,9 @@ describe('MachineCard', () => {
 
   it('exibe os valores de sensores', () => {
     render(<MachineCard machine={makeMachine()} onClick={() => {}} />);
-    expect(screen.getByText('2.100')).toBeInTheDocument(); // RPM
-    expect(screen.getByText('550')).toBeInTheDocument();   // Potência
-    expect(screen.getByText('42')).toBeInTheDocument();    // Temperatura
+    expect(screen.getByText('2.100')).toBeInTheDocument();
+    expect(screen.getByText('550')).toBeInTheDocument();
+    expect(screen.getByText('42')).toBeInTheDocument();
   });
 
   it('exibe "Nenhum" quando não há alertas', () => {

@@ -1,19 +1,18 @@
 /**
- * src/components/FilterBar/FilterBar.test.jsx
- * Testes do componente FilterBar.
+ * src/components/FilterBar/FilterBar.test.tsx
  */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import FilterBar from './FilterBar';
 
 const defaultProps = {
-  search: '',
-  onSearch: jest.fn(),
-  local: '',
-  onLocal: jest.fn(),
+  search:    '',
+  onSearch:  jest.fn(),
+  local:     '',
+  onLocal:   jest.fn(),
   locations: ['Setor A', 'Setor B', 'Setor C'],
-  total: 10,
-  filtered: 10,
+  total:     10,
+  filtered:  10,
 };
 
 describe('FilterBar', () => {

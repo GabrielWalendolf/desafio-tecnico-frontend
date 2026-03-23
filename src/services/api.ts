@@ -1,15 +1,15 @@
 /**
- * src/services/api.js
+ * src/services/api.ts
  * Camada centralizada de comunicação com a API ECO+.
- * Usa axios com Basic Auth + x-api-key header.
  */
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosError } from 'axios';
+import { Machine, UpdateMachinePayload } from '../types';
 
-const api = axios.create({
+const api: AxiosInstance = axios.create({
   baseURL: process.env.REACT_APP_API_BASE_URL,
   auth: {
-    username: process.env.REACT_APP_API_USER,
-    password: process.env.REACT_APP_API_PASS,
+    username: process.env.REACT_APP_API_USER ?? '',
+    password: process.env.REACT_APP_API_PASS ?? '',
   },
   headers: {
     'Content-Type': 'application/json',
@@ -20,10 +20,9 @@ const api = axios.create({
   timeout: 15000,
 });
 
-/* ── Interceptor: loga erros em desenvolvimento ─────────────────── */
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
+  (err: AxiosError) => {
     if (process.env.NODE_ENV === 'development') {
       console.error('[API Error]', err?.response?.status, err?.config?.url, err?.message);
     }
@@ -31,22 +30,15 @@ api.interceptors.response.use(
   }
 );
 
-/**
- * Busca todas as máquinas monitoradas.
- * @returns {Promise<Array>} Lista de máquinas com campo `dados[]`
- */
-export async function fetchMachines() {
-  const response = await api.get('/maquinas');
+export async function fetchMachines(): Promise<Machine[]> {
+  const response = await api.get<Machine[]>('/maquinas');
   return response.data;
 }
 
-/**
- * Atualiza metadados de uma máquina.
- * @param {number|string} id - ID da máquina
- * @param {{ nome?: string, descricao?: string, local?: string }} payload
- * @returns {Promise<Object>} Máquina atualizada ou mensagem de sucesso
- */
-export async function updateMachine(id, payload) {
+export async function updateMachine(
+  id: number | string,
+  payload: UpdateMachinePayload
+): Promise<unknown> {
   const response = await api.post(`/maquinas/${id}`, payload);
   return response.data;
 }

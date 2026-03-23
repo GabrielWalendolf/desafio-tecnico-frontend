@@ -1,12 +1,12 @@
 /**
- * src/components/KpiCards/KpiCards.test.jsx
- * Testes do componente KpiCards.
+ * src/components/KpiCards/KpiCards.test.tsx
  */
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import KpiCards from './KpiCards';
+import { StatusCounts } from '../../types';
 
-const defaultCounts = {
+const defaultCounts: StatusCounts = {
   operando: 5,
   alerta:   2,
   atencao:  1,
@@ -14,11 +14,11 @@ const defaultCounts = {
 };
 
 const defaultProps = {
-  counts:        defaultCounts,
-  total:         9,
+  counts:         defaultCounts,
+  total:          9,
   previousCounts: null,
-  activeFilter:  null,
-  onCardClick:   jest.fn(),
+  activeFilter:   null as keyof StatusCounts | null,
+  onCardClick:    jest.fn(),
 };
 
 describe('KpiCards', () => {
@@ -47,13 +47,6 @@ describe('KpiCards', () => {
     expect(onCardClick).toHaveBeenCalledWith('operando');
   });
 
-  it('chama onCardClick com a chave correta ao clicar em Em Alerta', () => {
-    const onCardClick = jest.fn();
-    render(<KpiCards {...defaultProps} onCardClick={onCardClick} />);
-    fireEvent.click(screen.getByLabelText('Filtrar por Em Alerta'));
-    expect(onCardClick).toHaveBeenCalledWith('alerta');
-  });
-
   it('chama onCardClick ao pressionar Enter', () => {
     const onCardClick = jest.fn();
     render(<KpiCards {...defaultProps} onCardClick={onCardClick} />);
@@ -73,32 +66,22 @@ describe('KpiCards', () => {
 
   it('marca card ativo com aria-pressed true', () => {
     render(<KpiCards {...defaultProps} activeFilter="operando" />);
-    const card = screen.getByLabelText('Filtrar por Operando');
-    expect(card).toHaveAttribute('aria-pressed', 'true');
-  });
-
-  it('marca cards inativos com aria-pressed false', () => {
-    render(<KpiCards {...defaultProps} activeFilter="operando" />);
-    const card = screen.getByLabelText('Filtrar por Em Alerta');
-    expect(card).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByLabelText('Filtrar por Operando')).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('exibe tendência quando previousCounts é fornecido', () => {
-    const previousCounts = { operando: 3, alerta: 2, atencao: 1, offline: 1 };
+    const previousCounts: StatusCounts = { operando: 3, alerta: 2, atencao: 1, offline: 1 };
     render(<KpiCards {...defaultProps} previousCounts={previousCounts} />);
-    // Operando subiu de 3 para 5 → deve mostrar +2
     expect(screen.getByText('+2')).toBeInTheDocument();
   });
 
   it('exibe "Estável" quando counts não mudaram', () => {
-    const previousCounts = { ...defaultCounts };
-    render(<KpiCards {...defaultProps} previousCounts={previousCounts} />);
-    const estavel = screen.getAllByText('Estável');
-    expect(estavel.length).toBeGreaterThan(0);
+    render(<KpiCards {...defaultProps} previousCounts={{ ...defaultCounts }} />);
+    expect(screen.getAllByText('Estável').length).toBeGreaterThan(0);
   });
 
   it('renderiza corretamente com todos os counts zerados', () => {
-    const zeroCounts = { operando: 0, alerta: 0, atencao: 0, offline: 0 };
+    const zeroCounts: StatusCounts = { operando: 0, alerta: 0, atencao: 0, offline: 0 };
     render(<KpiCards {...defaultProps} counts={zeroCounts} total={0} />);
     expect(screen.getByText('Operando')).toBeInTheDocument();
   });

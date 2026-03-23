@@ -1,16 +1,10 @@
 /**
- * src/constants/statusMap.js
- *
+ * src/constants/statusMap.ts
  * Fonte única da verdade para mapeamento de status da API → categoria KPI.
- *
- * Para adicionar um novo status basta incluir uma entrada aqui.
- * As chaves devem corresponder EXATAMENTE ao valor retornado pela API
- * (incluindo acentuação e capitalização).
- *
- * Categorias disponíveis: 'operando' | 'alerta' | 'atencao' | 'offline'
  */
+import { StatusCategory } from '../types';
 
-export const STATUS_CATEGORY_MAP = {
+export const STATUS_CATEGORY_MAP: Record<string, StatusCategory> = {
   // ── Operando ────────────────────────────────────────────────
   'Operando':           'operando',
 
@@ -28,34 +22,21 @@ export const STATUS_CATEGORY_MAP = {
   'Manutenção':         'offline',
 };
 
-/**
- * Ordem de exibição das categorias no grid de máquinas.
- * Máquinas problemáticas aparecem primeiro; operando por último.
- */
-export const STATUS_SORT_ORDER = {
+export const STATUS_SORT_ORDER: Record<StatusCategory, number> = {
   alerta:   0,
   atencao:  1,
   offline:  2,
   operando: 3,
 };
 
-/**
- * Retorna a categoria KPI de um status.
- * Se o status não estiver mapeado, cai em 'offline' por segurança
- * e loga um aviso em desenvolvimento para facilitar a detecção de
- * novos valores vindos da API.
- *
- * @param {string} status - Valor de status retornado pela API
- * @returns {'operando'|'alerta'|'atencao'|'offline'}
- */
-export function getStatusCategory(status) {
+export function getStatusCategory(status: string): StatusCategory {
   const category = STATUS_CATEGORY_MAP[status];
 
   if (!category) {
     if (process.env.NODE_ENV === 'development') {
       console.warn(
         `[statusMap] Status desconhecido: "${status}". ` +
-        'Adicione-o em src/constants/statusMap.js.'
+        'Adicione-o em src/constants/statusMap.ts.'
       );
     }
     return 'offline';
@@ -64,10 +45,7 @@ export function getStatusCategory(status) {
   return category;
 }
 
-/**
- * Mapeia categoria KPI → classe CSS usada nos cards e badges.
- */
-export const CATEGORY_CSS_CLASS = {
+export const CATEGORY_CSS_CLASS: Record<StatusCategory, string> = {
   operando: 'status--ok',
   alerta:   'status--danger',
   atencao:  'status--warn',

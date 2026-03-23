@@ -1,29 +1,23 @@
 /**
- * src/components/Navbar/Navbar.jsx
- * Navbar dark industrial com Phosphor Icons (bold).
- * Abre o PreferencesPanel ao clicar em "Preferências" no dropdown do usuário.
+ * src/components/Navbar/Navbar.tsx
  */
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Pulse,
-  ArrowClockwise,
-  Bell,
-  Gear,
-  CaretDown,
-  Cpu,
-  SquaresFour,
-  ChartBar,
-  List,
-  X,
-  User,
-  SignOut,
-  ShieldCheck,
-  Question,
+  Pulse, ArrowClockwise, Bell, Gear, CaretDown,
+  Cpu, SquaresFour, ChartBar, List, X,
+  User, SignOut, ShieldCheck, Question,
 } from '@phosphor-icons/react';
 import PreferencesPanel from '../PreferencesPanel/PreferencesPanel';
 import styles from './Navbar.module.css';
 
-function NavItem({ icon: Icon, label, active, onClick }) {
+interface NavItemProps {
+  icon: React.ElementType;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function NavItem({ icon: Icon, label, active, onClick }: NavItemProps): React.ReactElement {
   return (
     <button
       className={`${styles.navItem} ${active ? styles.navItemActive : ''}`}
@@ -36,17 +30,29 @@ function NavItem({ icon: Icon, label, active, onClick }) {
   );
 }
 
-export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }) {
-  const [activeNav, setActiveNav]   = useState('Dashboard');
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [bellOpen, setBellOpen]     = useState(false);
-  const [userOpen, setUserOpen]     = useState(false);
-  const [prefsOpen, setPrefsOpen]   = useState(false);
-  const userRef                     = useRef(null);
+interface NavbarProps {
+  onRefresh: () => void;
+  loading: boolean;
+  lastFetch: Date | null;
+  alertCount?: number;
+}
+
+export default function Navbar({
+  onRefresh,
+  loading,
+  lastFetch,
+  alertCount = 0,
+}: NavbarProps): React.ReactElement {
+  const [activeNav, setActiveNav]   = useState<string>('Dashboard');
+  const [mobileOpen, setMobileOpen] = useState<boolean>(false);
+  const [bellOpen, setBellOpen]     = useState<boolean>(false);
+  const [userOpen, setUserOpen]     = useState<boolean>(false);
+  const [prefsOpen, setPrefsOpen]   = useState<boolean>(false);
+  const userRef                     = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClickOutside(e) {
-      if (userRef.current && !userRef.current.contains(e.target)) {
+    function handleClickOutside(e: MouseEvent) {
+      if (userRef.current && !userRef.current.contains(e.target as Node)) {
         setUserOpen(false);
       }
     }
@@ -69,7 +75,6 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
     <>
       <header className={styles.navbar}>
         <div className={styles.topAccent} />
-
         <div className={styles.inner}>
           <div className={styles.brand}>
             <div className={styles.logoIcon}>
@@ -156,9 +161,7 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
                       <span className={styles.dropdownAlert}>
                         {alertCount} máquina{alertCount !== 1 ? 's' : ''} com alertas ativos
                       </span>
-                      <span className={styles.dropdownSub}>
-                        Verifique os cards no dashboard
-                      </span>
+                      <span className={styles.dropdownSub}>Verifique os cards no dashboard</span>
                     </div>
                   )}
                 </div>
@@ -190,35 +193,26 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
                       <p className={styles.userDropdownRole}>operador@ecoplus.com</p>
                     </div>
                   </div>
-
                   <div className={styles.userDropdownDivider} />
-
                   <button className={styles.userDropdownItem} role="menuitem">
-                    <User size={14} weight="bold" />
-                    <span>Meu Perfil</span>
+                    <User size={14} weight="bold" /><span>Meu Perfil</span>
                   </button>
                   <button className={styles.userDropdownItem} role="menuitem">
-                    <ShieldCheck size={14} weight="bold" />
-                    <span>Permissões</span>
+                    <ShieldCheck size={14} weight="bold" /><span>Permissões</span>
                   </button>
                   <button
                     className={`${styles.userDropdownItem} ${styles.userDropdownItemPrefs}`}
                     role="menuitem"
                     onClick={handleOpenPrefs}
                   >
-                    <Gear size={14} weight="bold" />
-                    <span>Preferências</span>
+                    <Gear size={14} weight="bold" /><span>Preferências</span>
                   </button>
                   <button className={styles.userDropdownItem} role="menuitem">
-                    <Question size={14} weight="bold" />
-                    <span>Ajuda & Suporte</span>
+                    <Question size={14} weight="bold" /><span>Ajuda & Suporte</span>
                   </button>
-
                   <div className={styles.userDropdownDivider} />
-
                   <button className={`${styles.userDropdownItem} ${styles.userDropdownLogout}`} role="menuitem">
-                    <SignOut size={14} weight="bold" />
-                    <span>Sair</span>
+                    <SignOut size={14} weight="bold" /><span>Sair</span>
                   </button>
                 </div>
               )}
@@ -253,9 +247,7 @@ export default function Navbar({ onRefresh, loading, lastFetch, alertCount = 0 }
         )}
       </header>
 
-      {prefsOpen && (
-        <PreferencesPanel onClose={() => setPrefsOpen(false)} />
-      )}
+      {prefsOpen && <PreferencesPanel onClose={() => setPrefsOpen(false)} />}
     </>
   );
 }

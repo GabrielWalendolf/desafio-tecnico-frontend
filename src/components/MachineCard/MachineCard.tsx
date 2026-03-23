@@ -1,5 +1,5 @@
 /**
- * src/components/MachineCard/MachineCard.jsx
+ * src/components/MachineCard/MachineCard.tsx
  */
 import React from 'react';
 import {
@@ -9,19 +9,25 @@ import {
   MapPin,
 } from '@phosphor-icons/react';
 import { getStatusClass, getLatestSensorData, formatDateTime } from '../../utils/machine';
+import { Machine } from '../../types';
 import styles from './MachineCard.module.css';
 
 const TEMP_KEYWORDS  = ['temp', 'temperatura', 'thermal', 'superaquec'];
 const POWER_KEYWORDS = ['potência', 'potencia', 'power', 'pico de potência', 'alerta de potência', 'energia'];
 const RPM_KEYWORDS   = ['rpm', 'velocidade', 'vibração', 'vibração alta', 'rotação'];
 
-function alertsMatch(alertas = [], keywords) {
+function alertsMatch(alertas: string[], keywords: string[]): boolean {
   return alertas.some((a) =>
     keywords.some((kw) => a.toLowerCase().includes(kw))
   );
 }
 
-export default function MachineCard({ machine, onClick }) {
+interface MachineCardProps {
+  machine: Machine;
+  onClick: (machine: Machine) => void;
+}
+
+export default function MachineCard({ machine, onClick }: MachineCardProps): React.ReactElement {
   const { rpm, potencia, temperatura } = getLatestSensorData(machine);
   const statusClass = getStatusClass(machine.status);
   const alertas = machine.alertas || [];
@@ -39,29 +45,24 @@ export default function MachineCard({ machine, onClick }) {
       onKeyDown={(e) => e.key === 'Enter' && onClick(machine)}
       aria-label={`Ver detalhes de ${machine.codigo}`}
     >
-      {/* Header ── nome (esquerda) + location (direita) */}
       <div className={styles.header}>
         <div className={styles.titleGroup}>
-          <span className={`${styles.statusDot} ${styles[statusClass.replace('status--', 'dot')]}`} />
+          <span className={`${styles.statusDot} ${styles[statusClass.replace('status--', 'dot') as keyof typeof styles]}`} />
           <h3 className={styles.name}>{machine.codigo}</h3>
         </div>
-
-        {/* Local alinhado à direita no header */}
         <div className={styles.location}>
           <MapPin size={12} weight="bold" />
           {machine.local}
         </div>
       </div>
 
-      {/* Status label + badge lado a lado */}
       <div className={styles.statusRow}>
         <span className={styles.statusLabel}>Status:</span>
-        <span className={`${styles.badge} ${styles[statusClass.replace('status--', 'badge')]}`}>
+        <span className={`${styles.badge} ${styles[statusClass.replace('status--', 'badge') as keyof typeof styles]}`}>
           {machine.status}
         </span>
       </div>
 
-      {/* Sensor metrics */}
       <div className={styles.metrics}>
         <div className={`${styles.metric} ${rpmClass}`}>
           <span className={styles.metricIcon}><Gauge size={13} weight="bold" /></span>
@@ -80,7 +81,6 @@ export default function MachineCard({ machine, onClick }) {
         </div>
       </div>
 
-      {/* Alertas: label + tags */}
       <div className={styles.alertsSection}>
         <span className={styles.alertsLabel}>Alertas:</span>
         <div className={styles.alerts}>
@@ -94,7 +94,6 @@ export default function MachineCard({ machine, onClick }) {
         </div>
       </div>
 
-      {/* Rodapé */}
       <div className={styles.footer}>
         <span>Atualizado: {formatDateTime(machine.ultimaAtualizacao)}</span>
       </div>

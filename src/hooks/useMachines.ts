@@ -1,43 +1,50 @@
 /**
- * src/hooks/useMachines.js
+ * src/hooks/useMachines.ts
  * Hook customizado para buscar e gerenciar o estado das máquinas.
- * Guarda um snapshot do counts anterior para exibir tendência nos KPI Cards.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchMachines, updateMachine } from '../services/api';
 import { groupByStatus } from '../utils/machine';
+import { Machine, StatusCounts, UpdateMachinePayload } from '../types';
 
-export function useMachines() {
-  const [machines, setMachines]             = useState([]);
-  const [loading, setLoading]               = useState(true);
-  const [error, setError]                   = useState(null);
-  const [lastFetch, setLastFetch]           = useState(null);
-  const [previousCounts, setPreviousCounts] = useState(null);
+export interface UseMachinesReturn {
+  machines: Machine[];
+  loading: boolean;
+  error: string | null;
+  refetch: () => Promise<void>;
+  update: (id: number | string, payload: UpdateMachinePayload) => Promise<unknown>;
+  lastFetch: Date | null;
+  previousCounts: StatusCounts | null;
+}
 
-  /* Ref para guardar counts atuais antes de sobrescrever */
-  const currentCountsRef = useRef(null);
+export function useMachines(): UseMachinesReturn {
+  const [machines, setMachines]             = useState<Machine[]>([]);
+  const [loading, setLoading]               = useState<boolean>(true);
+  const [error, setError]                   = useState<string | null>(null);
+  const [lastFetch, setLastFetch]           = useState<Date | null>(null);
+  const [previousCounts, setPreviousCounts] = useState<StatusCounts | null>(null);
 
-  const load = useCallback(async () => {
+  const currentCountsRef = useRef<StatusCounts | null>(null);
+
+  const load = useCallback(async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
       const data = await fetchMachines();
       const list = Array.isArray(data) ? data : [];
 
-      /* Salva snapshot dos counts atuais ANTES de atualizar */
       if (currentCountsRef.current) {
         setPreviousCounts(currentCountsRef.current);
       }
 
-      /* Calcula e registra os novos counts */
       currentCountsRef.current = groupByStatus(list);
-
       setMachines(list);
       setLastFetch(new Date());
-    } catch (err) {
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
       setError(
-        err?.response?.data?.message ||
-        err?.message ||
+        axiosErr?.response?.data?.message ??
+        axiosErr?.message ??
         'Erro ao conectar com a API.'
       );
     } finally {
@@ -49,11 +56,10 @@ export function useMachines() {
     load();
   }, [load]);
 
-  /**
-   * Atualiza metadados de uma máquina e reflete o change localmente
-   * sem precisar refazer o GET completo.
-   */
-  const update = useCallback(async (id, payload) => {
+  const update = useCallback(async (
+    id: number | string,
+    payload: UpdateMachinePayload
+  ): Promise<unknown> => {
     const result = await updateMachine(id, payload);
     setMachines((prev) =>
       prev.map((m) => (m.id === id ? { ...m, ...payload } : m))

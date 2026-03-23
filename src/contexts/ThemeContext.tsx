@@ -1,28 +1,29 @@
 /**
- * src/contexts/ThemeContext.js
+ * src/contexts/ThemeContext.tsx
  * Contexto global de tema (light | dark).
- * Persiste em localStorage e aplica data-theme no <html>.
  */
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { ThemeValue, ThemeContextValue } from '../types';
 
 const STORAGE_KEY = 'ecoplus-theme';
 
-export const ThemeContext = createContext({
+export const ThemeContext = createContext<ThemeContextValue>({
   theme: 'light',
   toggleTheme: () => {},
   setTheme: () => {},
 });
 
-export function ThemeProvider({ children }) {
-  const [theme, setThemeState] = useState(() => {
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<ThemeValue>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'dark'
-      : 'light';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
-  /* Aplica o atributo no <html> e persiste */
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem(STORAGE_KEY, theme);
@@ -31,7 +32,7 @@ export function ThemeProvider({ children }) {
   const toggleTheme = () =>
     setThemeState((t) => (t === 'light' ? 'dark' : 'light'));
 
-  const setTheme = (t) => setThemeState(t);
+  const setTheme = (t: ThemeValue) => setThemeState(t);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
@@ -40,6 +41,6 @@ export function ThemeProvider({ children }) {
   );
 }
 
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
 }

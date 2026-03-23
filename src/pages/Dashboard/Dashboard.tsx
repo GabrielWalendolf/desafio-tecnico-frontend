@@ -1,5 +1,5 @@
 /**
- * src/pages/Dashboard/Dashboard.jsx
+ * src/pages/Dashboard/Dashboard.tsx
  * Página principal: KPIs + grid de máquinas + painel lateral de alertas.
  */
 import React, { useState, useMemo } from 'react';
@@ -10,7 +10,25 @@ import FilterBar    from '../../components/FilterBar/FilterBar';
 import MachineModal from '../../components/MachineModal/MachineModal';
 import { LoadingState, ErrorState, EmptyState } from '../../components/StateViews/StateViews';
 import { groupByStatus, filterMachines, getLocations, sortMachines } from '../../utils/machine';
+import { getStatusCategory } from '../../constants/statusMap';
+import { Machine, StatusCounts, UpdateMachinePayload } from '../../types';
 import styles from './Dashboard.module.css';
+
+interface DashboardProps {
+  machines: Machine[];
+  loading: boolean;
+  error: string | null;
+  onRefetch: () => void;
+  onUpdate: (id: number | string, payload: UpdateMachinePayload) => Promise<unknown>;
+  previousCounts: StatusCounts | null;
+}
+
+const STATUS_FILTER_LABELS: Record<keyof StatusCounts, string> = {
+  operando: 'Operando',
+  alerta:   'Em Alerta',
+  atencao:  'Em Atenção',
+  offline:  'Offline',
+};
 
 export default function Dashboard({
   machines,
@@ -19,39 +37,33 @@ export default function Dashboard({
   onRefetch,
   onUpdate,
   previousCounts,
-}) {
-  const [selectedMachine, setSelectedMachine] = useState(null);
-  const [search, setSearch]                   = useState('');
-  const [localFilter, setLocalFilter]         = useState('');
-  const [statusFilter, setStatusFilter]       = useState(null); // 'operando' | 'alerta' | 'atencao' | 'offline' | null
+}: DashboardProps): React.ReactElement {
+  const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
+  const [search, setSearch]                   = useState<string>('');
+  const [localFilter, setLocalFilter]         = useState<string>('');
+  const [statusFilter, setStatusFilter]       = useState<keyof StatusCounts | null>(null);
 
   const counts    = useMemo(() => groupByStatus(machines), [machines]);
   const locations = useMemo(() => getLocations(machines),  [machines]);
 
-  /**
-   * Pipeline: filtra por texto + local + categoria KPI,
-   * depois ordena por prioridade (alerta → atenção → offline → operando).
-   */
   const filtered = useMemo(() => {
     let list = filterMachines(machines, { search, local: localFilter });
 
     if (statusFilter) {
-      const { getStatusCategory } = require('../../constants/statusMap');
       list = list.filter((m) => getStatusCategory(m.status) === statusFilter);
     }
 
     return sortMachines(list);
   }, [machines, search, localFilter, statusFilter]);
 
-  /* Alterna o filtro: clique no mesmo card remove o filtro */
-  const handleKpiClick = (key) => {
+  const handleKpiClick = (key: keyof StatusCounts) => {
     setStatusFilter((prev) => (prev === key ? null : key));
   };
 
   return (
     <main className={styles.page}>
 
-      {/* ── KPI Cards ─────────────────────────────────────────── */}
+      {/* ── KPI Cards ── */}
       <section className={styles.kpiSection}>
         <KpiCards
           counts={counts}
@@ -62,13 +74,11 @@ export default function Dashboard({
         />
       </section>
 
-      {/* ── Pill de filtro ativo ───────────────────────────────── */}
+      {/* ── Pill de filtro ativo ── */}
       {statusFilter && (
         <div className={styles.filterPill}>
           <span className={styles.filterPillLabel}>
-            Filtrado por: <strong>{
-              { operando: 'Operando', alerta: 'Em Alerta', atencao: 'Em Atenção', offline: 'Offline' }[statusFilter]
-            }</strong>
+            Filtrado por: <strong>{STATUS_FILTER_LABELS[statusFilter]}</strong>
           </span>
           <button
             className={styles.filterPillClear}
@@ -80,12 +90,9 @@ export default function Dashboard({
         </div>
       )}
 
-      {/* ── Main content: grid + sidebar ──────────────────────── */}
+      {/* ── Layout: grid + sidebar ── */}
       <div className={styles.layout}>
-
-        {/* Área central: filtros + grid de máquinas */}
         <div className={styles.gridArea}>
-
           {!loading && !error && (
             <FilterBar
               search={search}
@@ -118,11 +125,10 @@ export default function Dashboard({
           )}
         </div>
 
-        {/* Painel lateral de alertas */}
         {!loading && <AlertPanel machines={machines} />}
       </div>
 
-      {/* ── Modal de detalhes ─────────────────────────────────── */}
+      {/* ── Modal de detalhes ── */}
       {selectedMachine && (
         <MachineModal
           machine={selectedMachine}

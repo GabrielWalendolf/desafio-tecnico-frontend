@@ -1,33 +1,17 @@
 /**
- * src/components/MachineModal/MachineModal.jsx
+ * src/components/MachineModal/MachineModal.tsx
  * Modal de detalhes da máquina com 4 abas:
  * Resumo | Histórico | Estatísticas | Alertas & Sensores
- *
- * Ao clicar em "Salvar", abre o ConfirmDialog antes de chamar a API.
- *
- * ALTERAÇÃO: colorização das métricas (KPIs rápidos + tab Estatísticas
- * + tab Alertas & Sensores) agora segue a mesma lógica de keywords dos
- * alertas usada no MachineCard, em vez de thresholds numéricos fixos.
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Legend,
+  Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import {
-  X,
-  MapPin,
-  IdentificationCard,
-  Clock,
-  Gauge,
-  Lightning,
-  Thermometer,
-  CheckCircle,
-  Warning,
-  Robot,
-  PencilSimple,
-  FloppyDisk,
-  ArrowCounterClockwise,
+  X, MapPin, IdentificationCard, Clock, Gauge,
+  Lightning, Thermometer, CheckCircle, Warning,
+  Robot, PencilSimple, FloppyDisk, ArrowCounterClockwise,
 } from '@phosphor-icons/react';
 import {
   getLatestSensorData,
@@ -35,23 +19,23 @@ import {
   calcEfficiency,
   formatDateTime,
 } from '../../utils/machine';
-import ConfirmDialog from '../ConfirmDialog/ConfirmDialog_temp';
+import ConfirmDialog from '../ConfirmDialog/ConfirmDialog';
+import { Machine, UpdateMachinePayload, ConfirmField } from '../../types';
 import styles from './MachineModal.module.css';
 
-/* ── Mesmas keywords usadas no MachineCard ─────────────────────── */
+/* ── Keywords (mesma lógica do MachineCard) ── */
 const TEMP_KEYWORDS  = ['temp', 'temperatura', 'thermal', 'superaquec'];
 const POWER_KEYWORDS = ['potência', 'potencia', 'power', 'pico de potência', 'alerta de potência', 'energia'];
 const RPM_KEYWORDS   = ['rpm', 'velocidade', 'vibração', 'vibração alta', 'rotação'];
 
-/** Retorna true se algum alerta ativo contém uma das keywords */
-function alertsMatch(alertas = [], keywords) {
+function alertsMatch(alertas: string[], keywords: string[]): boolean {
   return alertas.some((a) =>
     keywords.some((kw) => a.toLowerCase().includes(kw))
   );
 }
 
-/* ── Placeholder de imagem da máquina ─────────────────────────── */
-function MachinePlaceholderImage({ name }) {
+/* ── Placeholder de imagem ── */
+function MachinePlaceholderImage({ name }: { name: string }): React.ReactElement {
   return (
     <div className={styles.imagePlaceholder}>
       <Robot size={48} weight="bold" />
@@ -60,8 +44,14 @@ function MachinePlaceholderImage({ name }) {
   );
 }
 
-/* ── Custom Tooltip do gráfico ─────────────────────────────────── */
-function ChartTooltip({ active, payload, label }) {
+/* ── Custom Tooltip do gráfico ── */
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{ dataKey: string; name: string; value: number; color: string }>;
+  label?: string;
+}
+
+function ChartTooltip({ active, payload, label }: ChartTooltipProps): React.ReactElement | null {
   if (!active || !payload?.length) return null;
   return (
     <div className={styles.chartTooltip}>
@@ -78,29 +68,57 @@ function ChartTooltip({ active, payload, label }) {
   );
 }
 
-/* ── Abas disponíveis ──────────────────────────────────────────── */
-const TABS = ['Resumo', 'Histórico', 'Estatísticas', 'Alertas & Sensores'];
-const RANGES = ['24h', '7 dias', '30 dias'];
+type TabLabel = 'Resumo' | 'Histórico' | 'Estatísticas' | 'Alertas & Sensores';
+type RangeLabel = '24h' | '7 dias' | '30 dias';
+type SaveStatus = 'success' | 'error' | null;
 
-/* ── Mapeamento de chave → label legível ───────────────────────── */
-const FIELD_LABELS = { nome: 'Nome', descricao: 'Descrição', local: 'Local' };
+const TABS: TabLabel[] = ['Resumo', 'Histórico', 'Estatísticas', 'Alertas & Sensores'];
+const RANGES: RangeLabel[] = ['24h', '7 dias', '30 dias'];
 
-export default function MachineModal({ machine, onClose, onUpdate }) {
-  const [activeTab, setActiveTab]       = useState('Resumo');
-  const [range, setRange]               = useState('24h');
-  const [editMode, setEditMode]         = useState(false);
-  const [form, setForm]                 = useState({});
-  const [saving, setSaving]             = useState(false);
-  const [saveStatus, setSaveStatus]     = useState(null); // 'success' | 'error' | null
-  const [showConfirm, setShowConfirm]   = useState(false);
-  const overlayRef                      = useRef(null);
+const FIELD_LABELS: Record<string, string> = {
+  nome:      'Nome',
+  descricao: 'Descrição',
+  local:     'Local',
+};
+
+interface EditForm {
+  nome: string;
+  descricao: string;
+  local: string;
+}
+
+interface ChartDataPoint {
+  time: string;
+  RPM: number;
+  Potência: number;
+  'Temp °C': number;
+}
+
+interface MachineModalProps {
+  machine: Machine;
+  onClose: () => void;
+  onUpdate: (id: number | string, payload: UpdateMachinePayload) => Promise<unknown>;
+}
+
+export default function MachineModal({
+  machine,
+  onClose,
+  onUpdate,
+}: MachineModalProps): React.ReactElement {
+  const [activeTab, setActiveTab]     = useState<TabLabel>('Resumo');
+  const [range, setRange]             = useState<RangeLabel>('24h');
+  const [editMode, setEditMode]       = useState<boolean>(false);
+  const [form, setForm]               = useState<EditForm>({ nome: '', descricao: '', local: '' });
+  const [saving, setSaving]           = useState<boolean>(false);
+  const [saveStatus, setSaveStatus]   = useState<SaveStatus>(null);
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const overlayRef                    = useRef<HTMLDivElement>(null);
 
   const { rpm, potencia, temperatura } = getLatestSensorData(machine);
   const eff       = calcEfficiency(machine);
   const statusCls = getStatusClass(machine.status);
 
-  /* ── Flags de alerta por métrica (mesma lógica do MachineCard) ── */
-  const alertas     = machine.alertas || [];
+  const alertas       = machine.alertas || [];
   const hasTempAlert  = alertsMatch(alertas, TEMP_KEYWORDS);
   const hasPowerAlert = alertsMatch(alertas, POWER_KEYWORDS);
   const hasRpmAlert   = alertsMatch(alertas, RPM_KEYWORDS);
@@ -117,28 +135,28 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
     setActiveTab('Resumo');
   }, [machine]);
 
-  /* Fecha o modal com ESC — mas só se o ConfirmDialog estiver fechado */
+  /* Fecha com ESC */
   useEffect(() => {
-    const handler = (e) => {
+    const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !showConfirm) onClose();
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onClose, showConfirm]);
 
-  /* Clique no overlay fecha (idem — só se ConfirmDialog fechado) */
-  const handleOverlayClick = (e) => {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === overlayRef.current && !showConfirm) onClose();
   };
 
-  /* Prepara dados do gráfico a partir de machine.dados[] */
-  const chartData = useCallback(() => {
+  /* Prepara dados do gráfico */
+  const chartData = useCallback((): ChartDataPoint[] => {
     const dados = machine?.dados || [];
     if (dados.length === 0) return [];
     const now = Date.now();
     const cutoff =
-      range === '24h'    ? now - 86400000 :
-      range === '7 dias' ? now - 604800000 : now - 2592000000;
+      range === '24h'    ? now - 86_400_000 :
+      range === '7 dias' ? now - 604_800_000 :
+                           now - 2_592_000_000;
 
     return dados
       .filter((d) => new Date(d.timestamp).getTime() >= cutoff)
@@ -152,12 +170,8 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
       }));
   }, [machine, range]);
 
-  /* Abre o ConfirmDialog ao clicar em "Salvar" */
-  const handleSaveRequest = () => {
-    setShowConfirm(true);
-  };
+  const handleSaveRequest = () => setShowConfirm(true);
 
-  /* Usuário confirmou → chama a API */
   const handleConfirm = async () => {
     setShowConfirm(false);
     setSaving(true);
@@ -166,20 +180,16 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
       await onUpdate(machine.id, form);
       setSaveStatus('success');
       setEditMode(false);
-    } catch (err) {
+    } catch {
       setSaveStatus('error');
     } finally {
       setSaving(false);
     }
   };
 
-  /* Usuário cancelou no ConfirmDialog */
-  const handleCancelConfirm = () => {
-    setShowConfirm(false);
-  };
+  const handleCancelConfirm = () => setShowConfirm(false);
 
-  /* Monta a lista de campos para exibir no ConfirmDialog */
-  const confirmFields = Object.entries(form).map(([key, value]) => ({
+  const confirmFields: ConfirmField[] = Object.entries(form).map(([key, value]) => ({
     label: FIELD_LABELS[key] ?? key,
     value,
   }));
@@ -198,7 +208,7 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
       >
         <div className={styles.modal}>
 
-          {/* ── Header do modal ───────────────────────────────── */}
+          {/* ── Header ── */}
           <div className={styles.modalHeader}>
             <div className={styles.machineInfo}>
               <MachinePlaceholderImage name={machine.codigo} />
@@ -207,7 +217,7 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                   <h2 className={styles.machineName}>{machine.codigo}</h2>
                   <div className={styles.statusWithLabel}>
                     <span className={styles.statusInlineLabel}>Status:</span>
-                    <span className={`${styles.badge} ${styles[statusCls.replace('status--', 'badge')]}`}>
+                    <span className={`${styles.badge} ${styles[statusCls.replace('status--', 'badge') as keyof typeof styles]}`}>
                       {machine.status}
                     </span>
                   </div>
@@ -227,12 +237,6 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                   </span>
                 </div>
 
-                {/*
-                  Quick KPIs — colorização por alerta (mesma lógica do MachineCard).
-                  kpiDanger → alerta ativo relacionado à métrica
-                  kpiWarn   → atenção ativa relacionada à métrica
-                  (sem alerta = cor padrão)
-                */}
                 <div className={styles.quickKpis}>
                   <div className={`${styles.kpi} ${hasRpmAlert ? styles.kpiDanger : ''}`}>
                     <span className={styles.kpiInlineLabel}>
@@ -260,7 +264,7 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
             </button>
           </div>
 
-          {/* ── Abas ─────────────────────────────────────────── */}
+          {/* ── Abas ── */}
           <div className={styles.tabs}>
             {TABS.map((t) => (
               <button
@@ -273,14 +277,13 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
             ))}
           </div>
 
-          {/* ── Conteúdo das abas ────────────────────────────── */}
+          {/* ── Conteúdo ── */}
           <div className={styles.tabContent}>
 
             {/* RESUMO */}
             {activeTab === 'Resumo' && (
               <div className={styles.tabPane}>
                 <div className={styles.summaryGrid}>
-
                   {/* Eficiência */}
                   <div className={styles.summaryCard}>
                     <h3 className={styles.summaryTitle}>Tempo por Estado</h3>
@@ -316,15 +319,15 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                       </dl>
                     ) : (
                       <div className={styles.editForm}>
-                        {['nome', 'descricao', 'local'].map((field) => (
+                        {(['nome', 'descricao', 'local'] as const).map((field) => (
                           <div key={field} className={styles.formGroup}>
-                            <label className={styles.formLabel}>
-                              {FIELD_LABELS[field]}
-                            </label>
+                            <label className={styles.formLabel}>{FIELD_LABELS[field]}</label>
                             <input
                               className={styles.formInput}
                               value={form[field]}
-                              onChange={(e) => setForm((p) => ({ ...p, [field]: e.target.value }))}
+                              onChange={(e) =>
+                                setForm((p) => ({ ...p, [field]: e.target.value }))
+                              }
                               disabled={saving}
                             />
                           </div>
@@ -407,7 +410,7 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
                       <XAxis dataKey="time" tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={false}/>
                       <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={false}/>
-                      <Tooltip content={<ChartTooltip />} />
+                      <RechartsTooltip content={<ChartTooltip />} />
                       <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)', paddingTop: 8 }} />
                       <Area type="monotone" dataKey="RPM"      stroke="var(--accent)" fill="url(#gRPM)"  strokeWidth={2} dot={false}/>
                       <Area type="monotone" dataKey="Potência" stroke="var(--info)"   fill="url(#gPow)"  strokeWidth={2} dot={false}/>
@@ -426,41 +429,38 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                   {[
                     {
                       label: 'Velocidade Média',
-                      val: rpm.toLocaleString('pt-BR'),
-                      unit: 'RPM',
-                      /* Alerta ativo de RPM → danger; sem alerta → cor padrão */
+                      val:   rpm.toLocaleString('pt-BR'),
+                      unit:  'RPM',
                       color: hasRpmAlert ? 'var(--danger)' : 'var(--text-bright)',
                     },
                     {
                       label: 'Potência Média',
-                      val: potencia.toLocaleString('pt-BR'),
-                      unit: 'W',
-                      /* Alerta ativo de potência → warning */
+                      val:   potencia.toLocaleString('pt-BR'),
+                      unit:  'W',
                       color: hasPowerAlert ? 'var(--warning)' : 'var(--info)',
                     },
                     {
                       label: 'Temperatura Média',
-                      val: `${temperatura}`,
-                      unit: '°C',
-                      /* Alerta ativo de temperatura → danger */
+                      val:   `${temperatura}`,
+                      unit:  '°C',
                       color: hasTempAlert ? 'var(--danger)' : 'var(--text-bright)',
                     },
                     {
                       label: 'Eficiência Geral',
-                      val: `${eff.eficiencia}`,
-                      unit: '%',
+                      val:   `${eff.eficiencia}`,
+                      unit:  '%',
                       color: 'var(--accent)',
                     },
                     {
                       label: 'Leituras Coletadas',
-                      val: (machine.dados?.length || 0).toString(),
-                      unit: 'pts',
+                      val:   (machine.dados?.length || 0).toString(),
+                      unit:  'pts',
                       color: 'var(--text-bright)',
                     },
                     {
                       label: 'Alertas Ativos',
-                      val: (machine.alertas?.length || 0).toString(),
-                      unit: '',
+                      val:   (machine.alertas?.length || 0).toString(),
+                      unit:  '',
                       color: machine.alertas?.length ? 'var(--danger)' : 'var(--accent)',
                     },
                   ].map((s) => (
@@ -490,7 +490,9 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                         <span className={styles.alertIcon}><Warning size={18} weight="bold" /></span>
                         <div>
                           <p className={styles.alertTitle}>{a}</p>
-                          <p className={styles.alertDesc}>Detecção: {formatDateTime(machine.ultimaAtualizacao)}</p>
+                          <p className={styles.alertDesc}>
+                            Detecção: {formatDateTime(machine.ultimaAtualizacao)}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -500,28 +502,9 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
                 <h4 className={styles.sensorsTitle}>Última Leitura de Sensores</h4>
                 <div className={styles.sensorGrid}>
                   {[
-                    {
-                      label: 'RPM',
-                      icon: Gauge,
-                      val: rpm.toLocaleString('pt-BR'),
-                      unit: 'RPM',
-                      /* Alerta de RPM ativo → não OK */
-                      ok: !hasRpmAlert,
-                    },
-                    {
-                      label: 'Potência',
-                      icon: Lightning,
-                      val: potencia.toLocaleString('pt-BR'),
-                      unit: 'W',
-                      ok: !hasPowerAlert,
-                    },
-                    {
-                      label: 'Temperatura',
-                      icon: Thermometer,
-                      val: `${temperatura}°C`,
-                      unit: '',
-                      ok: !hasTempAlert,
-                    },
+                    { label: 'RPM',        icon: Gauge,       val: rpm.toLocaleString('pt-BR'), unit: 'RPM', ok: !hasRpmAlert },
+                    { label: 'Potência',   icon: Lightning,   val: potencia.toLocaleString('pt-BR'), unit: 'W', ok: !hasPowerAlert },
+                    { label: 'Temperatura', icon: Thermometer, val: `${temperatura}°C`, unit: '', ok: !hasTempAlert },
                   ].map((s) => (
                     <div key={s.label} className={styles.sensorRow}>
                       <span className={styles.sensorIcon}><s.icon size={15} weight="bold" /></span>
@@ -538,11 +521,10 @@ export default function MachineModal({ machine, onClose, onUpdate }) {
               </div>
             )}
 
-          </div>{/* /tabContent */}
-        </div>{/* /modal */}
+          </div>
+        </div>
       </div>
 
-      {/* ── Pop-up de confirmação ─────────────────────────────── */}
       {showConfirm && (
         <ConfirmDialog
           fields={confirmFields}

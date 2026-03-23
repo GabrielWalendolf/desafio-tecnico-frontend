@@ -1,17 +1,13 @@
 /**
- * src/components/AlertPanel/AlertPanel.jsx
- * Painel lateral com alertas críticos + donut chart de distribuição.
+ * src/components/AlertPanel/AlertPanel.tsx
  */
 import React from 'react';
 import {
-  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer,
 } from 'recharts';
-import {
-  Warning,
-  ChartDonut,
-  Wrench,
-} from '@phosphor-icons/react';
+import { Warning, ChartDonut, Wrench } from '@phosphor-icons/react';
 import { countAlerts, formatDateTime } from '../../utils/machine';
+import { Machine, AlertChartEntry } from '../../types';
 import styles from './AlertPanel.module.css';
 
 const DONUT_COLORS = [
@@ -23,7 +19,12 @@ const DONUT_COLORS = [
   '#ffa657',
 ];
 
-const CustomTooltip = ({ active, payload }) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{ name: string; value: number }>;
+}
+
+function CustomTooltip({ active, payload }: TooltipProps): React.ReactElement | null {
   if (!active || !payload?.length) return null;
   return (
     <div className={styles.tooltip}>
@@ -31,10 +32,14 @@ const CustomTooltip = ({ active, payload }) => {
       <span className={styles.tooltipValue}>{payload[0].value}</span>
     </div>
   );
-};
+}
 
-export default function AlertPanel({ machines }) {
-  const alertData = countAlerts(machines);
+interface AlertPanelProps {
+  machines: Machine[];
+}
+
+export default function AlertPanel({ machines }: AlertPanelProps): React.ReactElement {
+  const alertData: AlertChartEntry[] = countAlerts(machines);
   const criticals = machines
     .filter((m) => m.alertas?.length > 0)
     .sort((a, b) => b.alertas.length - a.alertas.length)
@@ -44,8 +49,6 @@ export default function AlertPanel({ machines }) {
 
   return (
     <aside className={styles.panel}>
-
-      {/* Alertas críticos */}
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
           <span className={styles.titleIcon} style={{ color: 'var(--danger)' }}>
@@ -77,7 +80,6 @@ export default function AlertPanel({ machines }) {
         )}
       </section>
 
-      {/* Donut chart */}
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
           <span className={styles.titleIcon} style={{ color: 'var(--info)' }}>
@@ -107,7 +109,7 @@ export default function AlertPanel({ machines }) {
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<CustomTooltip />} />
+                <RechartsTooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
             <div className={styles.legend}>
@@ -126,7 +128,6 @@ export default function AlertPanel({ machines }) {
         )}
       </section>
 
-      {/* Próximas manutenções */}
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
           <span className={styles.titleIcon} style={{ color: 'var(--warning)' }}>
@@ -143,7 +144,6 @@ export default function AlertPanel({ machines }) {
           ))}
         </ul>
       </section>
-
     </aside>
   );
 }

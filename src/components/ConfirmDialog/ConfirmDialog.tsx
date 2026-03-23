@@ -1,26 +1,27 @@
 /**
- * src/components/ConfirmDialog/ConfirmDialog.jsx
- *
+ * src/components/ConfirmDialog/ConfirmDialog.tsx
  * Pop-up de confirmação antes de salvar alterações de metadados.
- * - Botão "Cancelar" pré-selecionado (autofocus) e em vermelho
- * - Botão "Salvar" em cinza com hover verde
- * - Fecha com ESC ou clique no overlay
  */
 import React, { useEffect, useRef } from 'react';
 import { Warning, X } from '@phosphor-icons/react';
-import styles from './ConfirmDialog_temp.module.css';
+import { ConfirmField } from '../../types';
+import styles from './ConfirmDialog.module.css';
 
-export default function ConfirmDialog({ fields, onConfirm, onCancel }) {
-  const cancelRef = useRef(null);
+interface ConfirmDialogProps {
+  fields: ConfirmField[];
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 
-  /* Foca o botão Cancelar ao abrir (pré-selecionado) */
+export default function ConfirmDialog({ fields, onConfirm, onCancel }: ConfirmDialogProps): React.ReactElement {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
     cancelRef.current?.focus();
   }, []);
 
-  /* Fecha com ESC */
   useEffect(() => {
-    const handler = (e) => { if (e.key === 'Escape') onCancel(); };
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onCancel(); };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [onCancel]);
@@ -34,18 +35,14 @@ export default function ConfirmDialog({ fields, onConfirm, onCancel }) {
       aria-labelledby="confirm-title"
     >
       <div className={styles.dialog}>
-
-        {/* ── Ícone de aviso ── */}
         <div className={styles.iconWrap}>
           <Warning size={28} weight="fill" />
         </div>
 
-        {/* ── Título ── */}
         <h3 className={styles.title} id="confirm-title">
           Confirmar alterações
         </h3>
 
-        {/* ── Mensagem ── */}
         <p className={styles.message}>
           Tem certeza que deseja salvar os dados editados?
           <br />
@@ -54,7 +51,6 @@ export default function ConfirmDialog({ fields, onConfirm, onCancel }) {
           </span>
         </p>
 
-        {/* ── Resumo dos campos alterados ── */}
         {fields && fields.length > 0 && (
           <ul className={styles.fieldList}>
             {fields.map(({ label, value }) => (
@@ -66,9 +62,7 @@ export default function ConfirmDialog({ fields, onConfirm, onCancel }) {
           </ul>
         )}
 
-        {/* ── Ações ── */}
         <div className={styles.actions}>
-          {/* Cancelar — pré-selecionado, vermelho */}
           <button
             ref={cancelRef}
             className={styles.cancelBtn}
@@ -78,16 +72,10 @@ export default function ConfirmDialog({ fields, onConfirm, onCancel }) {
             <X size={14} weight="bold" />
             Cancelar
           </button>
-
-          {/* Salvar — cinza com hover verde */}
-          <button
-            className={styles.saveBtn}
-            onClick={onConfirm}
-          >
+          <button className={styles.saveBtn} onClick={onConfirm}>
             Salvar alterações
           </button>
         </div>
-
       </div>
     </div>
   );

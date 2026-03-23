@@ -1,28 +1,29 @@
 /**
- * src/services/api.test.js
- * Testes do serviço de comunicação com a API.
+ * src/services/api.test.ts
  */
-
-// Mocka o axios antes de qualquer import
 jest.mock('axios', () => {
   const mockGet  = jest.fn();
   const mockPost = jest.fn();
   return {
+    default: {
+      create: jest.fn(() => ({
+        get:  mockGet,
+        post: mockPost,
+        interceptors: { response: { use: jest.fn() } },
+      })),
+    },
     create: jest.fn(() => ({
       get:  mockGet,
       post: mockPost,
-      interceptors: {
-        response: { use: jest.fn() },
-      },
+      interceptors: { response: { use: jest.fn() } },
     })),
   };
 });
 
-// Importa APÓS o mock estar configurado
-const { fetchMachines, updateMachine } = require('./api');
-const axios = require('axios');
+import { fetchMachines, updateMachine } from './api';
+import axios from 'axios';
 
-const mockInstance = axios.create();
+const mockInstance = (axios as any).create();
 
 const mockMachines = [
   {
@@ -32,14 +33,7 @@ const mockMachines = [
     status: 'Operando',
     alertas: [],
     ultimaAtualizacao: '2026-03-17T14:00:00-03:00',
-    dados: [
-      {
-        timestamp: '2026-03-17T14:00:00-03:00',
-        rpm: 2100,
-        potencia: 550,
-        temperatura: 42,
-      },
-    ],
+    dados: [{ timestamp: '2026-03-17T14:00:00-03:00', rpm: 2100, potencia: 550, temperatura: 42 }],
   },
 ];
 
@@ -48,7 +42,6 @@ describe('fetchMachines', () => {
 
   it('retorna lista de máquinas em caso de sucesso', async () => {
     mockInstance.get.mockResolvedValueOnce({ data: mockMachines });
-
     const result = await fetchMachines();
     expect(result).toEqual(mockMachines);
     expect(mockInstance.get).toHaveBeenCalledWith('/maquinas');
@@ -66,7 +59,6 @@ describe('updateMachine', () => {
   it('envia payload correto e retorna resposta', async () => {
     const payload = { nome: 'Torno Atualizado', local: 'Setor B' };
     mockInstance.post.mockResolvedValueOnce({ data: { success: true } });
-
     const result = await updateMachine(101, payload);
     expect(result).toEqual({ success: true });
     expect(mockInstance.post).toHaveBeenCalledWith('/maquinas/101', payload);

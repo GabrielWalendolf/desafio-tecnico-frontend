@@ -1,12 +1,11 @@
 /**
- * src/components/StateViews/StateViews.jsx
+ * src/components/StateViews/StateViews.tsx
  * Componentes reutilizáveis para estados de carregamento e erro.
  */
 import React from 'react';
 import styles from './StateViews.module.css';
 
-/* ── Skeleton card para o grid ────────────────────────────────── */
-function SkeletonCard() {
+function SkeletonCard(): React.ReactElement {
   return (
     <div className={styles.skeleton}>
       <div className={`${styles.skLine} ${styles.skTitle}`} />
@@ -21,7 +20,11 @@ function SkeletonCard() {
   );
 }
 
-export function LoadingState({ count = 9 }) {
+interface LoadingStateProps {
+  count?: number;
+}
+
+export function LoadingState({ count = 9 }: LoadingStateProps): React.ReactElement {
   return (
     <div className={styles.loadingGrid}>
       {Array.from({ length: count }).map((_, i) => (
@@ -31,7 +34,12 @@ export function LoadingState({ count = 9 }) {
   );
 }
 
-export function ErrorState({ message, onRetry }) {
+interface ErrorStateProps {
+  message: string | null;
+  onRetry?: () => void;
+}
+
+export function ErrorState({ message, onRetry }: ErrorStateProps): React.ReactElement {
   return (
     <div className={styles.errorWrap}>
       <div className={styles.errorIcon}>
@@ -51,7 +59,7 @@ export function ErrorState({ message, onRetry }) {
   );
 }
 
-export function EmptyState() {
+export function EmptyState(): React.ReactElement {
   return (
     <div className={styles.emptyWrap}>
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
