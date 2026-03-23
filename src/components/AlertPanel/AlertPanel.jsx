@@ -7,7 +7,7 @@ import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import {
-  WarningOctagon,
+  Warning,
   ChartDonut,
   Wrench,
 } from '@phosphor-icons/react';
@@ -49,7 +49,7 @@ export default function AlertPanel({ machines }) {
       <section className={styles.section}>
         <div className={styles.sectionTitle}>
           <span className={styles.titleIcon} style={{ color: 'var(--danger)' }}>
-            <WarningOctagon size={14} weight="fill" />
+            <Warning size={14} weight="bold" />
           </span>
           Alertas Críticos
         </div>
