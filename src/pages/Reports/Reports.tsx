@@ -35,6 +35,7 @@ import {
   formatDateTime,
 } from '../../utils/machine';
 import { getStatusCategory } from '../../constants/statusMap';
+import { classifyMachineMetrics, MetricStatus } from '../../constants/machineThresholds';
 import { LoadingState, ErrorState } from '../../components/StateViews/StateViews';
 import styles from './Reports.module.css';
 
@@ -50,6 +51,16 @@ const STATUS_BAR_COLORS: Record<string, string> = {
   atencao:  'var(--kpi-warn)',
   offline:  'var(--kpi-off)',
 };
+
+// ── Maps a MetricStatus to the correct CSS module class ─────────
+function metricClass(status: MetricStatus | undefined): string {
+  if (!status) return styles.metricCell;
+  switch (status) {
+    case 'ok':     return `${styles.metricCell} ${styles.metricCellOk}`;
+    case 'warn':   return `${styles.metricCell} ${styles.metricCellWarn}`;
+    case 'danger': return `${styles.metricCell} ${styles.metricCellDanger}`;
+  }
+}
 
 // ── Internal utilities ──────────────────────────────────────────
 function calcMachineAverages(machine: Machine) {
@@ -517,8 +528,10 @@ export default function Reports({
               <tbody>
                 {averagesData.map((m, i) => {
                   const { rpm, temperatura, potencia } = getLatestSensorData(m);
-                  const alertCount = m.alertas?.length ?? 0;
-                  const isTop = alertCount > 0 && i < 3;
+                  const alertCount  = m.alertas?.length ?? 0;
+                  const isTop       = alertCount > 0 && i < 3;
+                  // Classifica as métricas da última leitura pelos limites do tipo
+                  const cls = classifyMachineMetrics(m.codigo, rpm, potencia, temperatura);
                   return (
                     <tr key={m.id}>
                       <td>
@@ -547,21 +560,13 @@ export default function Reports({
                           {alertCount}
                         </span>
                       </td>
-                      <td className={styles.metricCell}>
+                      <td className={metricClass(cls?.rpm)}>
                         {rpm.toLocaleString('pt-BR')}
                       </td>
-                      <td
-                        className={`${styles.metricCell} ${
-                          temperatura > 75
-                            ? styles.metricCellDanger
-                            : temperatura > 60
-                            ? styles.metricCellWarn
-                            : ''
-                        }`}
-                      >
+                      <td className={metricClass(cls?.temperatura)}>
                         {temperatura}°C
                       </td>
-                      <td className={styles.metricCell}>
+                      <td className={metricClass(cls?.potencia)}>
                         {potencia.toLocaleString('pt-BR')} W
                       </td>
                     </tr>
@@ -596,38 +601,45 @@ export default function Reports({
                   </tr>
                 </thead>
                 <tbody>
-                  {averagesData.map((m) => (
-                    <tr key={m.id}>
-                      <td style={{ fontWeight: 600, color: 'var(--text-bright)', fontSize: '0.8rem' }}>
-                        {m.codigo}
-                      </td>
-                      <td className={styles.metricCell}>
-                        {m.avgRpm.toLocaleString('pt-BR')}
-                      </td>
-                      <td className={styles.metricCell}>
-                        {m.avgPotencia.toLocaleString('pt-BR')} W
-                      </td>
-                      <td
-                        className={`${styles.metricCell} ${
-                          m.avgTemperatura > 75
-                            ? styles.metricCellDanger
-                            : m.avgTemperatura > 60
-                            ? styles.metricCellWarn
-                            : m.avgTemperatura < 40
-                            ? styles.metricCellOk
-                            : ''
-                        }`}
-                      >
-                        {m.avgTemperatura}°C
-                      </td>
-                      <td
-                        className={styles.metricCell}
-                        style={{ color: 'var(--muted)', fontSize: '0.75rem' }}
-                      >
-                        {m.readings}
-                      </td>
-                    </tr>
-                  ))}
+                  {averagesData.map((m) => {
+                    const classification = classifyMachineMetrics(
+                      m.codigo,
+                      m.avgRpm,
+                      m.avgPotencia,
+                      m.avgTemperatura,
+                    );
+
+                    return (
+                      <tr key={m.id}>
+                        <td style={{ fontWeight: 600, color: 'var(--text-bright)', fontSize: '0.8rem' }}>
+                          {m.codigo}
+                        </td>
+
+                        {/* RPM */}
+                        <td className={metricClass(classification?.rpm)}>
+                          {m.avgRpm.toLocaleString('pt-BR')}
+                        </td>
+
+                        {/* Potência */}
+                        <td className={metricClass(classification?.potencia)}>
+                          {m.avgPotencia.toLocaleString('pt-BR')} W
+                        </td>
+
+                        {/* Temperatura */}
+                        <td className={metricClass(classification?.temperatura)}>
+                          {m.avgTemperatura}°C
+                        </td>
+
+                        {/* Leituras */}
+                        <td
+                          className={styles.metricCell}
+                          style={{ color: 'var(--muted)', fontSize: '0.75rem' }}
+                        >
+                          {m.readings}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
