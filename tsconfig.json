@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2015",
     "lib": ["dom", "dom.iterable", "esnext"],
+    "types": ["jest", "node", "@testing-library/jest-dom"],
     "allowJs": false,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -18,8 +19,6 @@
   },
   "include": ["src"],
   "exclude": [
-    "src/__mocks__",
-    "**/*.test.ts",
-    "**/*.test.tsx"
+    "src/__mocks__"
   ]
 }
