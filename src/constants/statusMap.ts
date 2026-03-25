@@ -10,13 +10,13 @@ export const STATUS_CATEGORY_MAP: Record<string, StatusCategory> = {
 
   // ── Em Alerta ───────────────────────────────────────────────
   'Temp. Alta':         'alerta',
-  'Ferramenta Gasta':   'alerta',
+  'Vibração Alta':      'alerta',
   'Alerta de Potência': 'alerta',
   'Parada':             'alerta',
 
   // ── Em Atenção ──────────────────────────────────────────────
   'Baixa Produção':     'atencao',
-  'Vibração Alta':      'atencao',
+  'Ferramenta Gasta':   'atencao',
 
   // ── Offline ─────────────────────────────────────────────────
   'Manutenção':         'offline',
