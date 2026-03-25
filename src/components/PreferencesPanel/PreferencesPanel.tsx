@@ -9,6 +9,14 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeValue } from '../../types';
 import styles from './PreferencesPanel.module.css';
 
+// ── Versão lida automaticamente ─────────────────────────────────
+// Em desenvolvimento: usa REACT_APP_VERSION ou fallback para package.json
+// Em produção (CI):   injetada pelo job deploy-production como REACT_APP_VERSION
+const APP_VERSION =
+  process.env.REACT_APP_VERSION ||
+  process.env.npm_package_version ||
+  '1.0.0';
+
 interface SettingRowProps {
   icon: React.ElementType;
   label: string;
@@ -201,7 +209,8 @@ export default function PreferencesPanel({ onClose }: PreferencesPanelProps): Re
               <div className={styles.aboutRow}>
                 <Info size={13} weight="bold" />
                 <span className={styles.aboutLabel}>Versão</span>
-                <span className={styles.aboutVal}>1.0.0</span>
+                {/* Atualizado automaticamente pelo CI a cada deploy */}
+                <span className={styles.aboutVal}>v{APP_VERSION}</span>
               </div>
               <div className={styles.aboutRow}>
                 <Info size={13} weight="bold" />

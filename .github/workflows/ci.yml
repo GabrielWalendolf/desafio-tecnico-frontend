@@ -7,49 +7,43 @@ on:
   pull_request:
     branches: [main, develop]
 
-# ── Permissões mínimas por job ───────────────────────────────────
+# ── Permissões — escrita necessária para o job de versão ────────
 permissions:
-  contents: read
-  pull-requests: write   # permite comentar PRs com o resumo do build
+  contents: write      # permite commit + tag de versão
+  pull-requests: write # permite comentar PRs
 
-# ── Variáveis de ambiente compartilhadas ────────────────────────
+# ── Variáveis compartilhadas ─────────────────────────────────────
 env:
   NODE_VERSION: '18'
-  # O deploy na Vercel só roda quando há token configurado
   VERCEL_ORG_ID:     ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
-# ════════════════════════════════════════════════════════════════
-# JOB 1 — Qualidade: lint + testes + build
-# ════════════════════════════════════════════════════════════════
 jobs:
+  # ════════════════════════════════════════════════════════════════
+  # JOB 1 — Qualidade: testes + build
+  # ════════════════════════════════════════════════════════════════
   quality:
-    name: 🔍 Qualidade (Lint · Testes · Build)
+    name: 🔍 Qualidade (Testes · Build)
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # 2. Node.js com cache do npm
       - name: Configurar Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
-      # 3. Instalar dependências com lockfile exato
       - name: Instalar dependências
         run: npm ci --legacy-peer-deps
 
-      # 4. Testes unitários + cobertura
       - name: Rodar testes
         run: npm test -- --watchAll=false --passWithNoTests --coverage --coverageReporters=text-summary
         env:
           CI: true
 
-      # 5. Build de produção (usa secrets quando disponíveis)
       - name: Build de produção
         run: npm run build
         env:
@@ -58,7 +52,6 @@ jobs:
           REACT_APP_API_PASS:     ${{ secrets.REACT_APP_API_PASS }}
           REACT_APP_API_KEY:      ${{ secrets.REACT_APP_API_KEY }}
 
-      # 6. Salva o artefato de build (usado pelo job de deploy)
       - name: Salvar artefato de build
         uses: actions/upload-artifact@v4
         with:
@@ -72,13 +65,12 @@ jobs:
   docker:
     name: 🐳 Docker Build
     runs-on: ubuntu-latest
-    needs: quality            # só roda se quality passar
+    needs: quality
 
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
 
-      # Cache das camadas do Docker (reduz tempo de rebuild ~60%)
       - name: Cache de camadas Docker
         uses: actions/cache@v4
         with:
@@ -87,11 +79,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      # Configura o Buildx (builder multi-plataforma)
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Cria o .env com as variáveis para o build do React dentro do Docker
       - name: Criar .env para build Docker
         run: |
           cat <<'EOF' > .env
@@ -101,12 +91,11 @@ jobs:
           REACT_APP_API_KEY=${{ secrets.REACT_APP_API_KEY }}
           EOF
 
-      # Build da imagem com cache de camadas
       - name: Build da imagem Docker
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: false                        # apenas valida; push ocorre só na main
+          push: false
           tags: ecoplus-machines:${{ github.sha }}
           build-args: |
             REACT_APP_API_BASE_URL=${{ secrets.REACT_APP_API_BASE_URL }}
@@ -116,20 +105,108 @@ jobs:
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to:   type=local,dest=/tmp/.buildx-cache-new,mode=max
 
-      # Rotaciona o cache (evita crescimento infinito)
       - name: Rotacionar cache Docker
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
   # ════════════════════════════════════════════════════════════════
-  # JOB 3 — Deploy Preview (PRs → Vercel Preview URL)
+  # JOB 3 — Versionamento automático (apenas na main)
+  #
+  # Lê o histórico de commits desde a última tag e decide o bump:
+  #   feat!: / BREAKING CHANGE → major  (1.0.0 → 2.0.0)
+  #   feat:                    → minor  (1.0.0 → 1.1.0)
+  #   fix: / outros            → patch  (1.0.0 → 1.0.1)
+  #
+  # Depois:
+  #   1. Atualiza package.json com npm version
+  #   2. Cria um commit "chore(release): vX.Y.Z [skip ci]"
+  #   3. Cria a tag git vX.Y.Z
+  #   4. Exporta a nova versão para os jobs seguintes
+  # ════════════════════════════════════════════════════════════════
+  versioning:
+    name: 🏷️ Versionamento Semântico
+    runs-on: ubuntu-latest
+    needs: [quality, docker]
+    if: |
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main'
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      tag:         ${{ steps.bump.outputs.tag }}
+
+    steps:
+      - name: Checkout completo (com histórico de tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Configurar identidade do git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Calcular próxima versão e aplicar bump
+        id: bump
+        run: |
+          # ── Versão atual do package.json ──────────────────────
+          CURRENT=$(node -p "require('./package.json').version")
+          echo "Versão atual: $CURRENT"
+
+          # ── Última tag semântica no repositório ───────────────
+          LAST_TAG=$(git tag --list 'v*' --sort=-version:refname | head -n1)
+          echo "Última tag: ${LAST_TAG:-nenhuma}"
+
+          # ── Commits desde a última tag (ou todos, se sem tag) ─
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --oneline)
+          else
+            COMMITS=$(git log "${LAST_TAG}..HEAD" --oneline)
+          fi
+          echo "Commits analisados:"
+          echo "$COMMITS"
+
+          # ── Determinar tipo de bump ────────────────────────────
+          BUMP="patch"
+
+          if echo "$COMMITS" | grep -qiE '(BREAKING CHANGE|feat!|fix!|refactor!)'; then
+            BUMP="major"
+          elif echo "$COMMITS" | grep -qiE '^[a-f0-9]+ feat(\(.+\))?:'; then
+            BUMP="minor"
+          fi
+          echo "Tipo de bump: $BUMP"
+
+          # ── Aplicar bump via npm version ───────────────────────
+          npm version "$BUMP" --no-git-tag-version --legacy-peer-deps
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          TAG="v${NEW_VERSION}"
+          echo "Nova versão: $NEW_VERSION  →  tag: $TAG"
+
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG"                 >> $GITHUB_OUTPUT
+
+      - name: Commit e tag da nova versão
+        run: |
+          TAG=${{ steps.bump.outputs.tag }}
+          git add package.json package-lock.json
+          git commit -m "chore(release): $TAG [skip ci]"
+          git tag "$TAG"
+          git push origin main --follow-tags
+
+  # ════════════════════════════════════════════════════════════════
+  # JOB 4 — Deploy Preview (PRs)
   # ════════════════════════════════════════════════════════════════
   deploy-preview:
     name: 🔮 Deploy Preview (Vercel)
     runs-on: ubuntu-latest
     needs: quality
-    # Roda apenas em PRs
     if: github.event_name == 'pull_request'
     environment:
       name: preview
@@ -147,22 +224,18 @@ jobs:
       - name: Instalar Vercel CLI
         run: npm install --global vercel@latest
 
-      # Pull das configurações do projeto na Vercel
       - name: Pull Vercel environment (Preview)
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
 
-      # Build usando as variáveis de ambiente do projeto na Vercel
       - name: Build (Vercel)
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
 
-      # Deploy sem promover para produção → gera uma Preview URL
       - name: Deploy Preview
         id: deploy
         run: |
           URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
           echo "preview_url=$URL" >> $GITHUB_OUTPUT
 
-      # Comenta a Preview URL no PR
       - name: Comentar Preview URL no PR
         uses: actions/github-script@v7
         with:
@@ -185,13 +258,13 @@ jobs:
             })
 
   # ════════════════════════════════════════════════════════════════
-  # JOB 4 — Deploy Produção (push na main → Vercel Production)
+  # JOB 5 — Deploy Produção (main → Vercel Production)
+  # Roda após o versionamento para que a versão já esteja no repo
   # ════════════════════════════════════════════════════════════════
   deploy-production:
     name: 🚀 Deploy Produção (Vercel)
     runs-on: ubuntu-latest
-    needs: [quality, docker]  # exige que build e docker passem
-    # Roda apenas em push direto à main (não em PRs)
+    needs: versioning
     if: |
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main'
@@ -200,8 +273,11 @@ jobs:
       url: ${{ steps.deploy.outputs.production_url }}
 
     steps:
-      - name: Checkout do código
+      - name: Checkout do código (pós-versioning)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Configurar Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
@@ -209,18 +285,20 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      - name: Instalar dependências
+        run: npm ci --legacy-peer-deps
+
       - name: Instalar Vercel CLI
         run: npm install --global vercel@latest
 
-      # Pull das configurações de produção
       - name: Pull Vercel environment (Production)
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
-      # Build de produção com as variáveis da Vercel
-      - name: Build (Vercel)
+      - name: Build (Vercel) com nova versão
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          REACT_APP_VERSION: ${{ needs.versioning.outputs.new_version }}
 
-      # Deploy e promoção para produção → URL estável
       - name: Deploy para Produção
         id: deploy
         run: |
@@ -229,4 +307,4 @@ jobs:
 
       - name: ✅ Deploy concluído
         run: |
-          echo "::notice title=Deploy concluído::${{ steps.deploy.outputs.production_url }}"
+          echo "::notice title=Deploy ${{ needs.versioning.outputs.tag }} concluído::${{ steps.deploy.outputs.production_url }}"
