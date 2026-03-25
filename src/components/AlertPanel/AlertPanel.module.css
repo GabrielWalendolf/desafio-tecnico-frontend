@@ -144,8 +144,6 @@
 
 .alertTag {
   font-size: 0.625rem;
-  background: var(--danger-dim);
-  color: var(--danger);
   border-radius: 3px;
   padding: 0.1rem 0.35rem;
   font-weight: 600;

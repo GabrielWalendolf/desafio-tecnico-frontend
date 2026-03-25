@@ -1,6 +1,7 @@
 /**
  * src/contexts/ThemeContext.tsx
  * Contexto global de tema (light | dark).
+ * Tema padrão: light — respeita preferência salva no localStorage.
  */
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { ThemeValue, ThemeContextValue } from '../types';
@@ -20,8 +21,9 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<ThemeValue>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
+    /* Respeita preferência salva; caso contrário usa light como padrão */
     if (saved === 'dark' || saved === 'light') return saved;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    return 'light';
   });
 
   useEffect(() => {

@@ -2,7 +2,7 @@
  * src/pages/Dashboard/Dashboard.tsx
  * Página principal: KPIs + grid de máquinas + painel lateral de alertas.
  */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import KpiCards    from '../../components/KpiCards/KpiCards';
 import MachineCard  from '../../components/MachineCard/MachineCard';
 import AlertPanel   from '../../components/AlertPanel/AlertPanel';
@@ -58,6 +58,15 @@ export default function Dashboard({
   /** Modo ativo do donut no momento do clique */
   const [pieMode, setPieMode]     = useState<DonutMode>('alertas');
 
+  /** Ref da área de cards — scroll automático ao filtrar */
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  const scrollToGrid = () => {
+    setTimeout(() => {
+      gridRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
+
   const counts    = useMemo(() => groupByStatus(machines), [machines]);
   const locations = useMemo(() => getLocations(machines),  [machines]);
 
@@ -86,20 +95,22 @@ export default function Dashboard({
   }, [machines, search, localFilter, statusFilter, pieSlice, pieMode]);
 
   const handleKpiClick = (key: keyof StatusCounts) => {
-    /* Clique no mesmo KPI remove o filtro; também limpa o pie */
     if (statusFilter === key) {
       setStatusFilter(null);
     } else {
       setStatusFilter(key);
       setPieSlice(null);
+      scrollToGrid();
     }
   };
 
   const handlePieClick = (name: string | null, mode: DonutMode) => {
     setPieSlice(name);
     setPieMode(mode);
-    /* Limpa filtro de KPI ao usar o donut */
-    if (name) setStatusFilter(null);
+    if (name) {
+      setStatusFilter(null);
+      scrollToGrid();
+    }
   };
 
   /* Label amigável do filtro ativo para exibir na pill */
@@ -146,7 +157,7 @@ export default function Dashboard({
 
       {/* ── Layout: grid + sidebar ── */}
       <div className={styles.layout}>
-        <div className={styles.gridArea}>
+        <div className={styles.gridArea} ref={gridRef}>
           {!loading && !error && (
             <FilterBar
               search={search}

@@ -10,6 +10,7 @@ import {
 } from '@phosphor-icons/react';
 import { getStatusClass, getLatestSensorData, formatDateTime } from '../../utils/machine';
 import { getStatusCategory } from '../../constants/statusMap';
+import { getAlertColor } from '../../constants/alertColors';
 import { Machine } from '../../types';
 import styles from './MachineCard.module.css';
 
@@ -23,12 +24,35 @@ function alertsMatch(alertas: string[], keywords: string[]): boolean {
   );
 }
 
-/** Mapeia categoria de status → cor CSS usada no hover */
 const STATUS_HOVER_COLOR: Record<string, string> = {
   operando: 'var(--kpi-ok)',
   alerta:   'var(--kpi-danger)',
   atencao:  'var(--kpi-warn)',
   offline:  'var(--kpi-off)',
+};
+
+/** Estilo inline das badges de status — mesmo padrão das badges de alerta */
+const STATUS_BADGE_CONFIG: Record<string, { color: string; bg: string; borderTop: string }> = {
+  operando: {
+    color:     '#3fb950',
+    bg:        'rgba(63,185,80,0.12)',
+    borderTop: 'rgba(63,185,80,0.22)',
+  },
+  alerta: {
+    color:     '#f85149',
+    bg:        'rgba(248,81,73,0.12)',
+    borderTop: 'rgba(248,81,73,0.22)',
+  },
+  atencao: {
+    color:     '#d29922',
+    bg:        'rgba(210,153,34,0.12)',
+    borderTop: 'rgba(210,153,34,0.22)',
+  },
+  offline: {
+    color:     '#768390',
+    bg:        'rgba(118,131,144,0.12)',
+    borderTop: 'rgba(118,131,144,0.22)',
+  },
 };
 
 interface MachineCardProps {
@@ -39,15 +63,16 @@ interface MachineCardProps {
 export default function MachineCard({ machine, onClick }: MachineCardProps): React.ReactElement {
   const { rpm, potencia, temperatura } = getLatestSensorData(machine);
   const statusClass = getStatusClass(machine.status);
-  const alertas = machine.alertas || [];
+  const alertas     = machine.alertas || [];
 
   const tempClass  = alertsMatch(alertas, TEMP_KEYWORDS)  ? styles.metricDanger : '';
   const powerClass = alertsMatch(alertas, POWER_KEYWORDS) ? styles.metricWarn   : '';
   const rpmClass   = alertsMatch(alertas, RPM_KEYWORDS)   ? styles.metricWarn   : '';
 
-  /* Cor de destaque do hover baseada no status da máquina */
   const category   = getStatusCategory(machine.status);
   const hoverColor = STATUS_HOVER_COLOR[category] ?? 'var(--accent)';
+
+  const badgeCfg = STATUS_BADGE_CONFIG[category] ?? STATUS_BADGE_CONFIG.offline;
 
   return (
     <article
@@ -72,7 +97,15 @@ export default function MachineCard({ machine, onClick }: MachineCardProps): Rea
 
       <div className={styles.statusRow}>
         <span className={styles.statusLabel}>Status:</span>
-        <span className={`${styles.badge} ${styles[statusClass.replace('status--', 'badge') as keyof typeof styles]}`}>
+        <span
+          className={styles.badge}
+          style={{
+            color:      badgeCfg.color,
+            background: badgeCfg.bg,
+            border:     'none',
+            borderTop:  `1px solid ${badgeCfg.borderTop}`,
+          }}
+        >
           {machine.status}
         </span>
       </div>
@@ -101,9 +134,23 @@ export default function MachineCard({ machine, onClick }: MachineCardProps): Rea
           {alertas.length === 0 ? (
             <span className={styles.noAlerts}>Nenhum</span>
           ) : (
-            alertas.map((a) => (
-              <span key={a} className={styles.alertTag}>{a}</span>
-            ))
+            alertas.map((a) => {
+              const cfg = getAlertColor(a);
+              return (
+                <span
+                  key={a}
+                  className={styles.alertTag}
+                  style={{
+                    color:          cfg.color,
+                    background:     cfg.bg,
+                    border:         'none',
+                    borderTop:      `1px solid ${cfg.borderTop}`,
+                  }}
+                >
+                  {a}
+                </span>
+              );
+            })
           )}
         </div>
       </div>

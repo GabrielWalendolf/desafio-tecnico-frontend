@@ -108,10 +108,6 @@
   border-radius: var(--radius-sm);
   white-space: nowrap;
 }
-.badgeok     { background: var(--accent-dim);           color: var(--accent);  }
-.badgedanger { background: var(--danger-dim);           color: var(--danger);  }
-.badgewarn   { background: var(--warning-dim);          color: var(--warning); }
-.badgeoff    { background: rgba(110,118,129,.12);       color: var(--muted);   }
 
 /* ── Metrics ── */
 .metrics {
@@ -201,9 +197,6 @@
 
 .alertTag {
   font-size: 0.6875rem;
-  background: var(--danger-dim);
-  color: var(--danger);
-  border: 1px solid rgba(248,81,73,.25);
   border-radius: 3px;
   padding: 0.15rem 0.4rem;
   font-weight: 500;

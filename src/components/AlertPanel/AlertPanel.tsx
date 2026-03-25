@@ -8,18 +8,12 @@ import {
 } from 'recharts';
 import { Warning, ChartDonut } from '@phosphor-icons/react';
 import { countAlerts, formatDateTime, groupByStatus } from '../../utils/machine';
+import { getAlertColor, ALERT_DONUT_COLORS } from '../../constants/alertColors';
 import { Machine, AlertChartEntry } from '../../types';
 import styles from './AlertPanel.module.css';
 
 /* ── Paletas ── */
-const ALERT_COLORS = [
-  'var(--danger)',
-  'var(--warning)',
-  'var(--accent)',
-  'var(--info)',
-  '#a371f7',
-  '#ffa657',
-];
+const ALERT_COLORS = ALERT_DONUT_COLORS;
 
 const STATUS_COLORS: Record<string, string> = {
   'Em Alerta':   'var(--kpi-danger)',
@@ -140,9 +134,23 @@ export default function AlertPanel({
                   <span className={styles.alertLocal}>{m.local}</span>
                 </div>
                 <div className={styles.alertTags}>
-                  {m.alertas.map((a) => (
-                    <span key={a} className={styles.alertTag}>{a}</span>
-                  ))}
+                  {m.alertas.map((a) => {
+                    const cfg = getAlertColor(a);
+                    return (
+                      <span
+                        key={a}
+                        className={styles.alertTag}
+                        style={{
+                          color:      cfg.color,
+                          background: cfg.bg,
+                          border:     'none',
+                          borderTop:  `1px solid ${cfg.borderTop}`,
+                        }}
+                      >
+                        {a}
+                      </span>
+                    );
+                  })}
                 </div>
                 <span className={styles.alertTime}>
                   {formatDateTime(m.ultimaAtualizacao)}
