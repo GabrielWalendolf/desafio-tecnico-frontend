@@ -9,6 +9,7 @@ import {
   MapPin,
 } from '@phosphor-icons/react';
 import { getStatusClass, getLatestSensorData, formatDateTime } from '../../utils/machine';
+import { getStatusCategory } from '../../constants/statusMap';
 import { Machine } from '../../types';
 import styles from './MachineCard.module.css';
 
@@ -21,6 +22,14 @@ function alertsMatch(alertas: string[], keywords: string[]): boolean {
     keywords.some((kw) => a.toLowerCase().includes(kw))
   );
 }
+
+/** Mapeia categoria de status → cor CSS usada no hover */
+const STATUS_HOVER_COLOR: Record<string, string> = {
+  operando: 'var(--kpi-ok)',
+  alerta:   'var(--kpi-danger)',
+  atencao:  'var(--kpi-warn)',
+  offline:  'var(--kpi-off)',
+};
 
 interface MachineCardProps {
   machine: Machine;
@@ -36,9 +45,14 @@ export default function MachineCard({ machine, onClick }: MachineCardProps): Rea
   const powerClass = alertsMatch(alertas, POWER_KEYWORDS) ? styles.metricWarn   : '';
   const rpmClass   = alertsMatch(alertas, RPM_KEYWORDS)   ? styles.metricWarn   : '';
 
+  /* Cor de destaque do hover baseada no status da máquina */
+  const category   = getStatusCategory(machine.status);
+  const hoverColor = STATUS_HOVER_COLOR[category] ?? 'var(--accent)';
+
   return (
     <article
       className={`${styles.card} fade-up`}
+      style={{ '--hover-color': hoverColor } as React.CSSProperties}
       onClick={() => onClick(machine)}
       role="button"
       tabIndex={0}

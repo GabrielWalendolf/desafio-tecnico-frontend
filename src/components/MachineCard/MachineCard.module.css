@@ -18,16 +18,17 @@
 }
 
 .card:hover {
-  border-color: var(--accent);
+  /* Borda e glow usam a cor do status injetada via --hover-color */
+  border-color: var(--hover-color, var(--accent));
   box-shadow:
-    0 0 0 2px var(--accent-glow),
-    0 10px 32px color-mix(in srgb, var(--accent) 18%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--hover-color, var(--accent)) 20%, transparent),
+    0 10px 32px color-mix(in srgb, var(--hover-color, var(--accent)) 18%, transparent),
     0 3px 10px rgba(0, 0, 0, 0.14);
   transform: translateY(-5px);
 }
 
 .card:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--hover-color, var(--accent));
   outline-offset: 2px;
 }
 
@@ -244,31 +245,24 @@
     border-radius: var(--radius-sm);
   }
 
-  /* Nome mais compacto */
   .name { font-size: 0.75rem; letter-spacing: 0; }
 
-  /* Status dot menor */
   .statusDot { width: 6px; height: 6px; }
 
-  /* Badge de status menor */
   .badge {
     font-size: 0.5625rem;
     padding: 0.15rem 0.35rem;
   }
 
-  /* Label "Status:" oculto para economizar linha */
   .statusLabel { display: none; }
 
-  /* Métricas: ícone oculto, só valor + unidade */
   .metricIcon { display: none; }
   .metric     { padding: 0.375rem 0.125rem; gap: 0.1rem; }
   .metricVal  { font-size: 0.75rem; }
   .metricUnit { font-size: 0.5rem; }
 
-  /* Alertas: label oculto */
   .alertsLabel { display: none; }
   .alertTag    { font-size: 0.5625rem; padding: 0.1rem 0.3rem; }
 
-  /* Footer: texto mais curto — mostra só horário */
   .footer { font-size: 0.5625rem; }
 }
