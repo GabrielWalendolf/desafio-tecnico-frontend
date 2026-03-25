@@ -12,10 +12,7 @@ import styles from './PreferencesPanel.module.css';
 // ── Versão lida automaticamente ─────────────────────────────────
 // Em desenvolvimento: usa REACT_APP_VERSION ou fallback para package.json
 // Em produção (CI):   injetada pelo job deploy-production como REACT_APP_VERSION
-const APP_VERSION =
-  process.env.REACT_APP_VERSION ||
-  process.env.npm_package_version ||
-  '1.0.0';
+const APP_VERSION = require('../../../package.json').version;
 
 interface SettingRowProps {
   icon: React.ElementType;
