@@ -93,8 +93,7 @@ export default function AlertPanel({
     { name: 'Operando',   value: counts.operando },
   ].filter((d) => d.value > 0);
 
-  const data   = mode === 'alertas' ? alertData : statusData;
-  const colors = mode === 'alertas' ? ALERT_COLORS : Object.values(STATUS_COLORS);
+  const data    = mode === 'alertas' ? alertData : statusData;
   const hasData = data.length > 0;
 
   const criticals = machines
