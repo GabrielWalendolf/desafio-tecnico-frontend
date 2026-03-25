@@ -202,11 +202,6 @@ input, select, textarea {
   box-shadow: var(--shadow-card) !important;
 }
 
-/* Alert Panel sections */
-[class*="AlertPanel_section"] {
-  box-shadow: var(--shadow-card);
-}
-
 /* Skeleton cards */
 [class*="StateViews_skeleton"] {
   box-shadow: var(--shadow-card);

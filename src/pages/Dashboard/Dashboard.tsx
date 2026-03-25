@@ -14,6 +14,16 @@ import { getStatusCategory } from '../../constants/statusMap';
 import { Machine, StatusCounts, UpdateMachinePayload } from '../../types';
 import styles from './Dashboard.module.css';
 
+type DonutMode = 'alertas' | 'status';
+
+/** Mapeia label do donut de status → categoria interna */
+const STATUS_LABEL_MAP: Record<string, keyof StatusCounts> = {
+  'Em Alerta':  'alerta',
+  'Em Atenção': 'atencao',
+  'Offline':    'offline',
+  'Operando':   'operando',
+};
+
 interface DashboardProps {
   machines: Machine[];
   loading: boolean;
@@ -43,21 +53,65 @@ export default function Dashboard({
   const [localFilter, setLocalFilter]         = useState<string>('');
   const [statusFilter, setStatusFilter]       = useState<keyof StatusCounts | null>(null);
 
+  /** Nome do slice clicado no donut (alerta ou label de status) */
+  const [pieSlice, setPieSlice]   = useState<string | null>(null);
+  /** Modo ativo do donut no momento do clique */
+  const [pieMode, setPieMode]     = useState<DonutMode>('alertas');
+
   const counts    = useMemo(() => groupByStatus(machines), [machines]);
   const locations = useMemo(() => getLocations(machines),  [machines]);
 
+  /* ── Filtragem principal ── */
   const filtered = useMemo(() => {
     let list = filterMachines(machines, { search, local: localFilter });
 
+    /* Filtro por KPI card (status) */
     if (statusFilter) {
       list = list.filter((m) => getStatusCategory(m.status) === statusFilter);
     }
 
+    /* Filtro por clique no donut */
+    if (pieSlice) {
+      if (pieMode === 'alertas') {
+        /* Mantém apenas máquinas que possuem o alerta clicado */
+        list = list.filter((m) => m.alertas?.includes(pieSlice));
+      } else {
+        /* Modo status: converte label → categoria */
+        const cat = STATUS_LABEL_MAP[pieSlice];
+        if (cat) list = list.filter((m) => getStatusCategory(m.status) === cat);
+      }
+    }
+
     return sortMachines(list);
-  }, [machines, search, localFilter, statusFilter]);
+  }, [machines, search, localFilter, statusFilter, pieSlice, pieMode]);
 
   const handleKpiClick = (key: keyof StatusCounts) => {
-    setStatusFilter((prev) => (prev === key ? null : key));
+    /* Clique no mesmo KPI remove o filtro; também limpa o pie */
+    if (statusFilter === key) {
+      setStatusFilter(null);
+    } else {
+      setStatusFilter(key);
+      setPieSlice(null);
+    }
+  };
+
+  const handlePieClick = (name: string | null, mode: DonutMode) => {
+    setPieSlice(name);
+    setPieMode(mode);
+    /* Limpa filtro de KPI ao usar o donut */
+    if (name) setStatusFilter(null);
+  };
+
+  /* Label amigável do filtro ativo para exibir na pill */
+  const activePillLabel = useMemo(() => {
+    if (statusFilter) return STATUS_FILTER_LABELS[statusFilter];
+    if (pieSlice)     return pieSlice;
+    return null;
+  }, [statusFilter, pieSlice]);
+
+  const clearAllFilters = () => {
+    setStatusFilter(null);
+    setPieSlice(null);
   };
 
   return (
@@ -75,14 +129,14 @@ export default function Dashboard({
       </section>
 
       {/* ── Pill de filtro ativo ── */}
-      {statusFilter && (
+      {activePillLabel && (
         <div className={styles.filterPill}>
           <span className={styles.filterPillLabel}>
-            Filtrado por: <strong>{STATUS_FILTER_LABELS[statusFilter]}</strong>
+            Filtrado por: <strong>{activePillLabel}</strong>
           </span>
           <button
             className={styles.filterPillClear}
-            onClick={() => setStatusFilter(null)}
+            onClick={clearAllFilters}
             aria-label="Remover filtro"
           >
             × Limpar filtro
@@ -125,7 +179,13 @@ export default function Dashboard({
           )}
         </div>
 
-        {!loading && <AlertPanel machines={machines} />}
+        {!loading && (
+          <AlertPanel
+            machines={machines}
+            activeSlice={pieSlice}
+            onPieClick={handlePieClick}
+          />
+        )}
       </div>
 
       {/* ── Modal de detalhes ── */}
