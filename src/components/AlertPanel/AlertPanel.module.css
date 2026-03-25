@@ -2,8 +2,10 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  /* Largura fixa no desktop — não cresce nem encolhe */
   width: 280px;
   flex-shrink: 0;
+  flex-grow: 0;
 }
 
 .section {
@@ -33,7 +35,6 @@
   outline: none;
 }
 
-/* Ícone temático no título */
 .titleIcon {
   display: flex;
   align-items: center;
@@ -149,7 +150,31 @@
   font-weight: 600;
 }
 
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVIDADE — tablet (≤ 1100px)
+   AlertPanel vai para baixo do grid em linha horizontal
+   ══════════════════════════════════════════════════════════════ */
 @media (max-width: 1100px) {
-  .panel { width: 100%; flex-direction: row; flex-wrap: wrap; }
-  .section { flex: 1 1 220px; }
+  .panel {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .section {
+    flex: 1 1 260px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVIDADE — mobile (≤ 600px)
+   Seções empilhadas verticalmente
+   ══════════════════════════════════════════════════════════════ */
+@media (max-width: 600px) {
+  .panel {
+    flex-direction: column;
+  }
+  .section {
+    flex: unset;
+    width: 100%;
+  }
 }
