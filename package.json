@@ -1,6 +1,6 @@
 {
   "name": "ecoplus-machines",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "private": true,
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
