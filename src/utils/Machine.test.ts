@@ -25,7 +25,7 @@ const makeMachine = (overrides: Partial<Machine> = {}): Machine => ({
 describe('getStatusClass', () => {
   it('retorna status--ok para Operando',        () => expect(getStatusClass('Operando')).toBe('status--ok'));
   it('retorna status--danger para Temp. Alta',  () => expect(getStatusClass('Temp. Alta')).toBe('status--danger'));
-  it('retorna status--warn para Vibração Alta', () => expect(getStatusClass('Vibração Alta')).toBe('status--warn'));
+  it('retorna status--danger para Vibração Alta', () => expect(getStatusClass('Vibração Alta')).toBe('status--danger'));
   it('retorna status--off para Manutenção',     () => expect(getStatusClass('Manutenção')).toBe('status--off'));
   it('retorna status--off para status desconhecido', () => expect(getStatusClass('Status Inexistente')).toBe('status--off'));
 });
@@ -57,7 +57,7 @@ describe('groupByStatus', () => {
       makeMachine({ status: 'Vibração Alta' }),
       makeMachine({ status: 'Manutenção' }),
     ];
-    expect(groupByStatus(machines)).toEqual({ operando: 2, alerta: 1, atencao: 1, offline: 1 });
+    expect(groupByStatus(machines)).toEqual({ operando: 2, alerta: 2, atencao: 0, offline: 1 });
   });
   it('retorna zeros para lista vazia', () => {
     expect(groupByStatus([])).toEqual({ operando: 0, alerta: 0, atencao: 0, offline: 0 });
@@ -113,8 +113,9 @@ describe('sortMachines', () => {
       makeMachine({ id: 4, status: 'Temp. Alta' }),
     ];
     const sorted = sortMachines(machines);
-    expect(sorted[0].id).toBe(4);
-    expect(sorted[1].id).toBe(3);
+    /* Vibração Alta e Temp. Alta são ambos 'alerta' — os dois ficam no topo */
+    expect(['status--danger'].includes(getStatusClass(sorted[0].status))).toBe(true);
+    expect(['status--danger'].includes(getStatusClass(sorted[1].status))).toBe(true);
     expect(sorted[2].id).toBe(2);
     expect(sorted[3].id).toBe(1);
   });
