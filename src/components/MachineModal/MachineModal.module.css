@@ -710,3 +710,53 @@
   .quickKpis   { gap: 0.4rem; }
   .kpi         { min-width: 60px; }
 }
+
+/* ── Adição: chartControls, serieSelector, serieBtn, controlsDivider ──
+   Inserir após a regra .chartTitle em MachineModal.module.css
+   ─────────────────────────────────────────────────────────────────── */
+
+/* Agrupa seletor de série + divisor + seletor de intervalo em linha */
+.chartControls {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+/* Divisor visual entre os dois grupos de botões */
+.controlsDivider {
+  display: inline-block;
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 0.125rem;
+  flex-shrink: 0;
+}
+
+/* Grupo dos botões RPM / Potência / Temp °C */
+.serieSelector {
+  display: flex;
+  gap: 0.25rem;
+}
+
+/* Botão de série — base */
+.serieBtn {
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.serieBtn:hover {
+  color: var(--text-primary);
+}
+
+/* Botão de série ativo — usa variáveis CSS injetadas via style prop */
+.serieBtnActive {
+  background: var(--serie-color-dim, var(--accent-dim)) !important;
+  border-color: var(--serie-color, var(--accent)) !important;
+  color: var(--serie-color, var(--accent)) !important;
+}

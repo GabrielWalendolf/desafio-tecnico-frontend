@@ -68,12 +68,29 @@ function ChartTooltip({ active, payload, label }: ChartTooltipProps): React.Reac
   );
 }
 
-type TabLabel = 'Resumo' | 'Histórico' | 'Estatísticas' | 'Alertas & Sensores';
-type RangeLabel = '24h' | '7 dias' | '30 dias';
-type SaveStatus = 'success' | 'error' | null;
+type TabLabel    = 'Resumo' | 'Histórico' | 'Estatísticas' | 'Alertas & Sensores';
+type RangeLabel  = '24h' | '7 dias' | '30 dias';
+/** Série selecionada para exibição isolada no gráfico */
+type SerieLabel  = 'RPM' | 'Potência' | 'Temp °C';
+type SaveStatus  = 'success' | 'error' | null;
 
-const TABS: TabLabel[] = ['Resumo', 'Histórico', 'Estatísticas', 'Alertas & Sensores'];
+const TABS:   TabLabel[]   = ['Resumo', 'Histórico', 'Estatísticas', 'Alertas & Sensores'];
 const RANGES: RangeLabel[] = ['24h', '7 dias', '30 dias'];
+const SERIES: SerieLabel[] = ['RPM', 'Potência', 'Temp °C'];
+
+/* Cor e gradiente de cada série */
+const SERIE_CONFIG: Record<SerieLabel, { stroke: string; fill: string; gradientId: string }> = {
+  'RPM':      { stroke: 'var(--accent)', fill: 'url(#gRPM)',  gradientId: 'gRPM'  },
+  'Potência': { stroke: 'var(--info)',   fill: 'url(#gPow)',  gradientId: 'gPow'  },
+  'Temp °C':  { stroke: 'var(--danger)', fill: 'url(#gTemp)', gradientId: 'gTemp' },
+};
+
+/* Título dinâmico exibido acima do gráfico */
+const SERIE_TITLE: Record<SerieLabel, string> = {
+  'RPM':      'RPM ao longo do tempo',
+  'Potência': 'Potência (W) ao longo do tempo',
+  'Temp °C':  'Temperatura (°C) ao longo do tempo',
+};
 
 const FIELD_LABELS: Record<string, string> = {
   nome:      'Nome',
@@ -88,7 +105,10 @@ interface EditForm {
 }
 
 interface ChartDataPoint {
+  /** Rótulo exibido no eixo X: "dd/MM HH:mm" */
   time: string;
+  /** Timestamp numérico usado para ordenação */
+  ts: number;
   RPM: number;
   Potência: number;
   'Temp °C': number;
@@ -107,6 +127,8 @@ export default function MachineModal({
 }: MachineModalProps): React.ReactElement {
   const [activeTab, setActiveTab]     = useState<TabLabel>('Resumo');
   const [range, setRange]             = useState<RangeLabel>('24h');
+  /** Série atualmente selecionada para exibição individual */
+  const [activeSerie, setActiveSerie] = useState<SerieLabel>('RPM');
   const [editMode, setEditMode]       = useState<boolean>(false);
   const [form, setForm]               = useState<EditForm>({ nome: '', descricao: '', local: '' });
   const [saving, setSaving]           = useState<boolean>(false);
@@ -148,10 +170,16 @@ export default function MachineModal({
     if (e.target === overlayRef.current && !showConfirm) onClose();
   };
 
-  /* Prepara dados do gráfico */
+  /**
+   * Prepara os pontos do gráfico.
+   * - Filtra pelo intervalo selecionado
+   * - Ordena do mais antigo ao mais recente (esquerda → direita)
+   * - Formata o rótulo do eixo X como "dd/MM HH:mm" para incluir a data completa
+   */
   const chartData = useCallback((): ChartDataPoint[] => {
     const dados = machine?.dados || [];
     if (dados.length === 0) return [];
+
     const now = Date.now();
     const cutoff =
       range === '24h'    ? now - 86_400_000 :
@@ -160,14 +188,23 @@ export default function MachineModal({
 
     return dados
       .filter((d) => new Date(d.timestamp).getTime() >= cutoff)
-      .map((d) => ({
-        time: new Date(d.timestamp).toLocaleTimeString('pt-BR', {
-          hour: '2-digit', minute: '2-digit',
-        }),
-        RPM:       d.rpm,
-        Potência:  d.potencia,
-        'Temp °C': d.temperatura,
-      }));
+      /* Ordena do registro mais antigo para o mais recente */
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+      .map((d) => {
+        const date = new Date(d.timestamp);
+        /* Formata como "HH:mm" — os dados são do mesmo dia */
+        const label = date.toLocaleTimeString('pt-BR', {
+          hour:   '2-digit',
+          minute: '2-digit',
+        });
+        return {
+          time:      label,
+          ts:        date.getTime(),
+          RPM:       d.rpm,
+          Potência:  d.potencia,
+          'Temp °C': d.temperatura,
+        };
+      });
   }, [machine, range]);
 
   const handleSaveRequest = () => setShowConfirm(true);
@@ -195,6 +232,7 @@ export default function MachineModal({
   }));
 
   const data = chartData();
+  const serieConfig = SERIE_CONFIG[activeSerie];
 
   return (
     <>
@@ -374,17 +412,50 @@ export default function MachineModal({
             {activeTab === 'Histórico' && (
               <div className={styles.tabPane}>
                 <div className={styles.chartHeader}>
-                  <h3 className={styles.chartTitle}>Sensores ao longo do tempo</h3>
-                  <div className={styles.rangeSelector}>
-                    {RANGES.map((r) => (
-                      <button
-                        key={r}
-                        className={`${styles.rangeBtn} ${range === r ? styles.rangeBtnActive : ''}`}
-                        onClick={() => setRange(r)}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                  {/* Título dinâmico baseado na série selecionada */}
+                  <h3 className={styles.chartTitle}>
+                    {SERIE_TITLE[activeSerie]}
+                  </h3>
+
+                  {/* Controles: seletor de série + seletor de intervalo */}
+                  <div className={styles.chartControls}>
+                    {/* Botões de série */}
+                    <div className={styles.serieSelector}>
+                      {SERIES.map((s) => (
+                        <button
+                          key={s}
+                          className={`${styles.serieBtn} ${activeSerie === s ? styles.serieBtnActive : ''}`}
+                          style={
+                            activeSerie === s
+                              ? ({
+                                  '--serie-color': SERIE_CONFIG[s].stroke,
+                                  '--serie-color-dim': `color-mix(in srgb, ${SERIE_CONFIG[s].stroke} 15%, transparent)`,
+                                } as React.CSSProperties)
+                              : undefined
+                          }
+                          onClick={() => setActiveSerie(s)}
+                          aria-pressed={activeSerie === s}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Divisor visual */}
+                    <span className={styles.controlsDivider} />
+
+                    {/* Botões de intervalo */}
+                    <div className={styles.rangeSelector}>
+                      {RANGES.map((r) => (
+                        <button
+                          key={r}
+                          className={`${styles.rangeBtn} ${range === r ? styles.rangeBtnActive : ''}`}
+                          onClick={() => setRange(r)}
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
@@ -392,7 +463,7 @@ export default function MachineModal({
                   <div className={styles.noData}>Sem dados para o período selecionado.</div>
                 ) : (
                   <ResponsiveContainer width="100%" height={280}>
-                    <AreaChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                    <AreaChart data={data} margin={{ top: 8, right: 16, left: -16, bottom: 0 }}>
                       <defs>
                         <linearGradient id="gRPM"  x1="0" y1="0" x2="0" y2="1">
                           <stop offset="5%"  stopColor="var(--accent)" stopOpacity={0.3}/>
@@ -408,13 +479,37 @@ export default function MachineModal({
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
-                      <XAxis dataKey="time" tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={false}/>
-                      <YAxis tick={{ fill: 'var(--muted)', fontSize: 11 }} tickLine={false} axisLine={false}/>
+                      <XAxis
+                        dataKey="time"
+                        tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                        /**
+                         * Distribui uniformemente até MAX_TICKS labels no eixo X.
+                         * interval=0 mostra todos; interval=N pula N pontos entre cada tick.
+                         * Math.max(0, ...) garante que nunca seja negativo com poucos pontos.
+                         */
+                        interval={Math.max(0, Math.floor(data.length / 6) - 1)}
+                      />
+                      <YAxis
+                        tick={{ fill: 'var(--muted)', fontSize: 11 }}
+                        tickLine={false}
+                        axisLine={false}
+                      />
                       <RechartsTooltip content={<ChartTooltip />} />
-                      <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)', paddingTop: 8 }} />
-                      <Area type="monotone" dataKey="RPM"      stroke="var(--accent)" fill="url(#gRPM)"  strokeWidth={2} dot={false}/>
-                      <Area type="monotone" dataKey="Potência" stroke="var(--info)"   fill="url(#gPow)"  strokeWidth={2} dot={false}/>
-                      <Area type="monotone" dataKey="Temp °C"  stroke="var(--danger)" fill="url(#gTemp)" strokeWidth={2} dot={false}/>
+                      <Legend
+                        wrapperStyle={{ fontSize: '12px', color: 'var(--text-secondary)', paddingTop: 8 }}
+                      />
+                      {/* Renderiza apenas a série selecionada */}
+                      <Area
+                        type="monotone"
+                        dataKey={activeSerie}
+                        stroke={serieConfig.stroke}
+                        fill={serieConfig.fill}
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={true}
+                      />
                     </AreaChart>
                   </ResponsiveContainer>
                 )}
