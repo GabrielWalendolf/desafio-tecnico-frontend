@@ -4,7 +4,7 @@
  *
  * Seções:
  *  1. Resumo executivo (4 KPIs rápidos)
- *  2. Alertas Críticos + Distribuição de Alertas (donut)
+ *  2. Alertas Críticos + Distribuição de Alertas (donut) ← toggle Alertas/Status
  *  3. Ranking de Criticidade (tabela ordenável)
  *  4. Tabela de Médias por Máquina + Máquinas sem Comunicação
  *  5. Histórico de Status por Local (barras empilhadas)
@@ -24,9 +24,9 @@ import {
 import {
   Warning, CheckCircle, WifiX, Gauge,
   ChartBar, MapPin, ChartDonut,
-  CaretUp, CaretDown, DownloadSimple,
+  CaretUp, CaretDown, CaretLeft, CaretRight,
 } from '@phosphor-icons/react';
-import { Machine } from '../../types';
+import { Machine, AlertChartEntry } from '../../types';
 import {
   countAlerts,
   groupByStatus,
@@ -36,15 +36,23 @@ import {
 } from '../../utils/machine';
 import { getStatusCategory } from '../../constants/statusMap';
 import { classifyMachineMetrics, MetricStatus } from '../../constants/machineThresholds';
+import { ALERT_DONUT_COLORS } from '../../constants/alertColors';
 import { LoadingState, ErrorState } from '../../components/StateViews/StateViews';
 import styles from './Reports.module.css';
 
-// ── Color palette ───────────────────────────────────────────────
-const DONUT_COLORS = [
-  'var(--danger)', 'var(--warning)', 'var(--accent)',
-  'var(--info)', '#a371f7', '#ffa657',
-];
+// ── Color palettes — mesmas do AlertPanel ───────────────────────
+const DONUT_COLORS = ALERT_DONUT_COLORS;
 
+const STATUS_COLORS: Record<string, string> = {
+  'Em Alerta':  'var(--kpi-danger)',
+  'Em Atenção': 'var(--kpi-warn)',
+  'Offline':    'var(--kpi-off)',
+  'Operando':   'var(--kpi-ok)',
+};
+
+type DonutMode = 'alertas' | 'status';
+
+// ── Color for stacked bar chart (unchanged) ─────────────────────
 const STATUS_BAR_COLORS: Record<string, string> = {
   operando: 'var(--kpi-ok)',
   alerta:   'var(--kpi-danger)',
@@ -107,7 +115,7 @@ function getMachinesWithoutRecentComm(machines: Machine[], thresholdMinutes = 60
 }
 
 function formatMinutesAgo(minutes: number): string {
-  if (minutes < 60)  return `${minutes}min atrás`;
+  if (minutes < 60)   return `${minutes}min atrás`;
   if (minutes < 1440) return `${Math.round(minutes / 60)}h atrás`;
   return `${Math.round(minutes / 1440)}d atrás`;
 }
@@ -205,8 +213,10 @@ interface ReportsProps {
 export default function Reports({
   machines, loading, error, onRefetch,
 }: ReportsProps): React.ReactElement {
-  const [sortKey, setSortKey] = useState<SortKey>('alertas');
-  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [sortKey, setSortKey]     = useState<SortKey>('alertas');
+  const [sortDir, setSortDir]     = useState<SortDir>('desc');
+  const [criticalsPage, setCriticalsPage] = useState<number>(0);
+  const [donutMode, setDonutMode] = useState<DonutMode>('alertas');
 
   // ── Derived data ────────────────────────────────────────────
   const counts        = useMemo(() => groupByStatus(machines), [machines]);
@@ -214,13 +224,13 @@ export default function Reports({
   const statusByLocal = useMemo(() => groupStatusByLocal(machines), [machines]);
   const noComm        = useMemo(() => getMachinesWithoutRecentComm(machines, 60), [machines]);
 
-  const criticals = useMemo(
-    () =>
-      machines
-        .filter((m) => (m.alertas?.length ?? 0) > 0)
-        .sort((a, b) => b.alertas.length - a.alertas.length),
-    [machines]
-  );
+const criticals = useMemo(
+  () =>
+    machines
+      .filter((m) => getStatusCategory(m.status) === 'alerta')
+      .sort((a, b) => b.alertas.length - a.alertas.length),
+  [machines]
+);
 
   const scatterData = useMemo(
     () =>
@@ -257,12 +267,37 @@ export default function Reports({
 
   const avgEfficiency = useMemo(() => {
     if (!machines.length) return 0;
-    const sum = machines.reduce(
-      (acc, m) => acc + Math.max(0, 100 - (m.alertas?.length ?? 0) * 12),
-      0
-    );
+
+    const STATUS_BASE: Record<string, number> = {
+      operando: 100,
+      atencao:  70,
+      alerta:   40,
+      offline:  0,
+    };
+
+    const sum = machines.reduce((acc, m) => {
+      const base    = STATUS_BASE[getStatusCategory(m.status)] ?? 0;
+      const penalty = (m.alertas?.length ?? 0) * 5;
+      return acc + Math.max(0, base - penalty);
+    }, 0);
+
     return Math.round(sum / machines.length);
   }, [machines]);
+
+  // ── Donut data — muda conforme o modo selecionado ───────────
+  const statusData: AlertChartEntry[] = useMemo(() => [
+    { name: 'Em Alerta',  value: counts.alerta   },
+    { name: 'Em Atenção', value: counts.atencao  },
+    { name: 'Offline',    value: counts.offline  },
+    { name: 'Operando',   value: counts.operando },
+  ].filter((d) => d.value > 0), [counts]);
+
+  const donutData = donutMode === 'alertas' ? alertData : statusData;
+
+  const getDonutColor = (name: string, index: number): string =>
+    donutMode === 'status'
+      ? (STATUS_COLORS[name] ?? DONUT_COLORS[index % DONUT_COLORS.length])
+      : DONUT_COLORS[index % DONUT_COLORS.length];
 
   // ── Sort click handler ──────────────────────────────────────
   const handleSort = (key: SortKey) => {
@@ -289,10 +324,10 @@ export default function Reports({
   function StatusPill({ status }: { status: string }) {
     const cat = getStatusCategory(status);
     const styleMap: Record<string, { bg: string; color: string }> = {
-      operando: { bg: 'var(--accent-dim)',                    color: 'var(--accent)'  },
-      alerta:   { bg: 'var(--danger-dim)',                    color: 'var(--danger)'  },
-      atencao:  { bg: 'var(--warning-dim)',                   color: 'var(--warning)' },
-      offline:  { bg: 'rgba(87, 96, 106, 0.10)',              color: 'var(--muted)'   },
+      operando: { bg: 'var(--accent-dim)',               color: 'var(--accent)'  },
+      alerta:   { bg: 'var(--danger-dim)',               color: 'var(--danger)'  },
+      atencao:  { bg: 'var(--warning-dim)',              color: 'var(--warning)' },
+      offline:  { bg: 'rgba(87, 96, 106, 0.10)',         color: 'var(--muted)'   },
     };
     const s = styleMap[cat] ?? styleMap.offline;
     return (
@@ -334,10 +369,6 @@ export default function Reports({
             Visão consolidada da frota · {machines.length} máquinas monitoradas
           </p>
         </div>
-        <button className={styles.exportBtn} title="Exportar relatório (em breve)">
-          <DownloadSimple size={14} weight="bold" />
-          Exportar PDF
-        </button>
       </div>
 
       {/* ── 1. Summary stats ── */}
@@ -405,48 +436,101 @@ export default function Reports({
         <div className={styles.twoCol}>
           {/* Lista de alertas */}
           <div className={styles.card}>
-            {criticals.length === 0 ? (
-              <div className={styles.empty}>
-                <CheckCircle size={36} weight="bold" color="var(--accent)" />
-                <span>Nenhum alerta ativo no momento.</span>
-              </div>
-            ) : (
-              <ul className={styles.alertList}>
-                {criticals.slice(0, 6).map((m) => (
-                  <li key={m.id} className={styles.alertItem}>
-                    <span className={styles.alertItemIcon}>
-                      <Warning size={15} weight="bold" />
-                    </span>
-                    <div className={styles.alertItemBody}>
-                      <div className={styles.alertItemName}>{m.codigo}</div>
-                      <div className={styles.alertItemMeta}>
-                        {m.local} · {formatDateTime(m.ultimaAtualizacao)}
-                      </div>
-                      <div className={styles.alertTags}>
-                        {m.alertas.map((a) => (
-                          <span key={a} className={styles.alertTag}>{a}</span>
-                        ))}
-                      </div>
+            {(() => {
+              const PAGE_SIZE   = 5;
+              const totalPages  = Math.ceil(criticals.length / PAGE_SIZE);
+              const paginated   = criticals.slice(
+                criticalsPage * PAGE_SIZE,
+                criticalsPage * PAGE_SIZE + PAGE_SIZE
+              );
+              return criticals.length === 0 ? (
+                <div className={styles.empty}>
+                  <CheckCircle size={36} weight="bold" color="var(--accent)" />
+                  <span>Nenhum alerta ativo no momento.</span>
+                </div>
+              ) : (
+                <>
+                  <ul className={styles.alertList}>
+                    {paginated.map((m) => (
+                      <li key={m.id} className={styles.alertItem}>
+                        <span className={styles.alertItemIcon}>
+                          <Warning size={15} weight="bold" />
+                        </span>
+                        <div className={styles.alertItemBody}>
+                          <div className={styles.alertItemName}>{m.codigo}</div>
+                          <div className={styles.alertItemMeta}>
+                            {m.local} · {formatDateTime(m.ultimaAtualizacao)}
+                          </div>
+                          <div className={styles.alertTags}>
+                            {m.alertas.map((a) => (
+                              <span key={a} className={styles.alertTag}>{a}</span>
+                            ))}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {totalPages > 1 && (
+                    <div className={styles.alertPagination}>
+                      <button
+                        className={styles.alertPageBtn}
+                        onClick={() => setCriticalsPage((p) => Math.max(0, p - 1))}
+                        disabled={criticalsPage === 0}
+                        aria-label="Página anterior"
+                      >
+                        <CaretLeft size={11} weight="bold" />
+                      </button>
+                      <span className={styles.alertPageInfo}>
+                        {criticalsPage + 1}/{totalPages}
+                      </span>
+                      <button
+                        className={styles.alertPageBtn}
+                        onClick={() => setCriticalsPage((p) => Math.min(totalPages - 1, p + 1))}
+                        disabled={criticalsPage === totalPages - 1}
+                        aria-label="Próxima página"
+                      >
+                        <CaretRight size={11} weight="bold" />
+                      </button>
                     </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                  )}
+                </>
+              );
+            })()}
           </div>
 
-          {/* Donut de distribuição */}
+          {/* Donut de distribuição — com toggle Alertas / Status */}
           <div className={styles.card}>
-            {alertData.length === 0 ? (
+            {/* Cabeçalho do donut: título + toggle (espelha AlertPanel) */}
+            <div className={styles.donutCardHeader}>
+              <span className={styles.donutCardTitle}>Distribuição</span>
+              <div className={styles.modeToggle}>
+                <button
+                  className={`${styles.modeBtn} ${donutMode === 'alertas' ? styles.modeBtnActive : ''}`}
+                  onClick={() => setDonutMode('alertas')}
+                >
+                  Alertas
+                </button>
+                <button
+                  className={`${styles.modeBtn} ${donutMode === 'status' ? styles.modeBtnActive : ''}`}
+                  onClick={() => setDonutMode('status')}
+                >
+                  Status
+                </button>
+              </div>
+            </div>
+
+            {donutData.length === 0 ? (
               <div className={styles.empty}>
                 <ChartDonut size={32} color="var(--muted)" weight="bold" />
-                <span>Sem dados de alertas para exibir.</span>
+                <span>Sem dados para exibir.</span>
               </div>
             ) : (
               <>
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie
-                      data={alertData}
+                      data={donutData}
                       cx="50%"
                       cy="50%"
                       innerRadius={55}
@@ -454,27 +538,32 @@ export default function Reports({
                       paddingAngle={3}
                       dataKey="value"
                     >
-                      {alertData.map((_, i) => (
+                      {donutData.map((entry, i) => (
                         <Cell
-                          key={i}
-                          fill={DONUT_COLORS[i % DONUT_COLORS.length]}
+                          key={entry.name}
+                          fill={getDonutColor(entry.name, i)}
                         />
                       ))}
                     </Pie>
                     <RechartsTooltip content={<GenericTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
+
+                {/* Legenda — mesma estrutura visual do AlertPanel */}
                 <div className={styles.donutLegend}>
-                  {alertData.map((item, i) => (
-                    <div key={item.name} className={styles.legendRow}>
-                      <span
-                        className={styles.legendDot}
-                        style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }}
-                      />
-                      <span className={styles.legendName}>{item.name}</span>
-                      <span className={styles.legendVal}>{item.value}</span>
-                    </div>
-                  ))}
+                  {donutData.map((item, i) => {
+                    const color = getDonutColor(item.name, i);
+                    return (
+                      <div key={item.name} className={styles.legendRow}>
+                        <span
+                          className={styles.legendDot}
+                          style={{ background: color }}
+                        />
+                        <span className={styles.legendName}>{item.name}</span>
+                        <span className={styles.legendVal}>{item.value}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             )}
@@ -528,10 +617,9 @@ export default function Reports({
               <tbody>
                 {averagesData.map((m, i) => {
                   const { rpm, temperatura, potencia } = getLatestSensorData(m);
-                  const alertCount  = m.alertas?.length ?? 0;
-                  const isTop       = alertCount > 0 && i < 3;
-                  // Classifica as métricas da última leitura pelos limites do tipo
-                  const cls = classifyMachineMetrics(m.codigo, rpm, potencia, temperatura);
+                  const alertCount = m.alertas?.length ?? 0;
+                  const isTop      = alertCount > 0 && i < 3;
+                  const cls        = classifyMachineMetrics(m.codigo, rpm, potencia, temperatura);
                   return (
                     <tr key={m.id}>
                       <td>
@@ -578,7 +666,7 @@ export default function Reports({
         </div>
       </section>
 
-      {/* ── 5. Médias por Máquina + Sem Comunicação ── */}
+      {/* ── 4. Médias por Máquina + Sem Comunicação ── */}
       <div className={styles.twoCol}>
         {/* Tabela de médias */}
         <section className={styles.section}>
@@ -608,29 +696,20 @@ export default function Reports({
                       m.avgPotencia,
                       m.avgTemperatura,
                     );
-
                     return (
                       <tr key={m.id}>
                         <td style={{ fontWeight: 600, color: 'var(--text-bright)', fontSize: '0.8rem' }}>
                           {m.codigo}
                         </td>
-
-                        {/* RPM */}
                         <td className={metricClass(classification?.rpm)}>
                           {m.avgRpm.toLocaleString('pt-BR')}
                         </td>
-
-                        {/* Potência */}
                         <td className={metricClass(classification?.potencia)}>
                           {m.avgPotencia.toLocaleString('pt-BR')} W
                         </td>
-
-                        {/* Temperatura */}
                         <td className={metricClass(classification?.temperatura)}>
                           {m.avgTemperatura}°C
                         </td>
-
-                        {/* Leituras */}
                         <td
                           className={styles.metricCell}
                           style={{ color: 'var(--muted)', fontSize: '0.75rem' }}
@@ -678,7 +757,7 @@ export default function Reports({
         </section>
       </div>
 
-      {/* ── 6. Status por Local ── */}
+      {/* ── 5. Status por Local ── */}
       <section className={styles.section}>
         <SectionHeader
           icon={MapPin}
@@ -724,32 +803,10 @@ export default function Reports({
                       paddingTop: 12,
                     }}
                   />
-                  <Bar
-                    dataKey="alerta"
-                    name="Em Alerta"
-                    stackId="a"
-                    fill={STATUS_BAR_COLORS.alerta}
-                    radius={[0, 0, 0, 0]}
-                  />
-                  <Bar
-                    dataKey="atencao"
-                    name="Em Atenção"
-                    stackId="a"
-                    fill={STATUS_BAR_COLORS.atencao}
-                  />
-                  <Bar
-                    dataKey="offline"
-                    name="Offline"
-                    stackId="a"
-                    fill={STATUS_BAR_COLORS.offline}
-                  />
-                  <Bar
-                    dataKey="operando"
-                    name="Operando"
-                    stackId="a"
-                    fill={STATUS_BAR_COLORS.operando}
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="alerta"   name="Em Alerta"   stackId="a" fill={STATUS_BAR_COLORS.alerta}   radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="atencao"  name="Em Atenção"  stackId="a" fill={STATUS_BAR_COLORS.atencao}  />
+                  <Bar dataKey="offline"  name="Offline"     stackId="a" fill={STATUS_BAR_COLORS.offline}  />
+                  <Bar dataKey="operando" name="Operando"    stackId="a" fill={STATUS_BAR_COLORS.operando} radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -757,7 +814,7 @@ export default function Reports({
         </div>
       </section>
 
-      {/* ── 7. Dispersão RPM × Temperatura ── */}
+      {/* ── 6. Dispersão RPM × Temperatura ── */}
       <section className={styles.section}>
         <SectionHeader
           icon={ChartDonut}

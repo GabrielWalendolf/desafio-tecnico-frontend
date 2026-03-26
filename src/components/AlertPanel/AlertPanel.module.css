@@ -186,6 +186,19 @@
   border: 1px solid var(--border-subtle);
   border-left: 3px solid var(--danger);
   border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.alertItem:hover {
+  border-color: var(--danger);
+}
+
+/* ── Estado ativo: máquina selecionada como filtro ── */
+.alertItemActive {
+  background: var(--danger-dim) !important;
+  border-color: var(--danger) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--danger) 25%, transparent);
 }
 
 .alertMachine {

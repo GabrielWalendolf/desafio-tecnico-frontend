@@ -3,7 +3,7 @@
  * Página principal: KPIs + grid de máquinas + painel lateral de alertas.
  */
 import React, { useState, useMemo, useRef } from 'react';
-import KpiCards    from '../../components/KpiCards/KpiCards';
+import KpiCards     from '../../components/KpiCards/KpiCards';
 import MachineCard  from '../../components/MachineCard/MachineCard';
 import AlertPanel   from '../../components/AlertPanel/AlertPanel';
 import FilterBar    from '../../components/FilterBar/FilterBar';
@@ -54,9 +54,11 @@ export default function Dashboard({
   const [statusFilter, setStatusFilter]       = useState<keyof StatusCounts | null>(null);
 
   /** Nome do slice clicado no donut (alerta ou label de status) */
-  const [pieSlice, setPieSlice]   = useState<string | null>(null);
+  const [pieSlice, setPieSlice] = useState<string | null>(null);
   /** Modo ativo do donut no momento do clique */
-  const [pieMode, setPieMode]     = useState<DonutMode>('alertas');
+  const [pieMode, setPieMode]   = useState<DonutMode>('alertas');
+  /** Id da máquina clicada no painel de alertas críticos */
+  const [machineFilter, setMachineFilter] = useState<number | null>(null);
 
   /** Ref da área de cards — scroll automático ao filtrar */
   const gridRef = useRef<HTMLDivElement>(null);
@@ -82,17 +84,20 @@ export default function Dashboard({
     /* Filtro por clique no donut */
     if (pieSlice) {
       if (pieMode === 'alertas') {
-        /* Mantém apenas máquinas que possuem o alerta clicado */
         list = list.filter((m) => m.alertas?.includes(pieSlice));
       } else {
-        /* Modo status: converte label → categoria */
         const cat = STATUS_LABEL_MAP[pieSlice];
         if (cat) list = list.filter((m) => getStatusCategory(m.status) === cat);
       }
     }
 
+    /* Filtro por clique num item de alerta crítico — filtra pelo id da máquina */
+    if (machineFilter !== null) {
+      list = list.filter((m) => m.id === machineFilter);
+    }
+
     return sortMachines(list);
-  }, [machines, search, localFilter, statusFilter, pieSlice, pieMode]);
+  }, [machines, search, localFilter, statusFilter, pieSlice, pieMode, machineFilter]);
 
   const handleKpiClick = (key: keyof StatusCounts) => {
     if (statusFilter === key) {
@@ -100,6 +105,7 @@ export default function Dashboard({
     } else {
       setStatusFilter(key);
       setPieSlice(null);
+      setMachineFilter(null);
       scrollToGrid();
     }
   };
@@ -109,20 +115,34 @@ export default function Dashboard({
     setPieMode(mode);
     if (name) {
       setStatusFilter(null);
+      setMachineFilter(null);
+      scrollToGrid();
+    }
+  };
+
+  const handleMachineClick = (id: number | null) => {
+    setMachineFilter(id);
+    if (id !== null) {
+      setStatusFilter(null);
+      setPieSlice(null);
       scrollToGrid();
     }
   };
 
   /* Label amigável do filtro ativo para exibir na pill */
   const activePillLabel = useMemo(() => {
+    if (machineFilter !== null) {
+      return machines.find((m) => m.id === machineFilter)?.codigo ?? String(machineFilter);
+    }
     if (statusFilter) return STATUS_FILTER_LABELS[statusFilter];
     if (pieSlice)     return pieSlice;
     return null;
-  }, [statusFilter, pieSlice]);
+  }, [statusFilter, pieSlice, machineFilter, machines]);
 
   const clearAllFilters = () => {
     setStatusFilter(null);
     setPieSlice(null);
+    setMachineFilter(null);
   };
 
   return (
@@ -195,6 +215,8 @@ export default function Dashboard({
             machines={machines}
             activeSlice={pieSlice}
             onPieClick={handlePieClick}
+            activeMachineId={machineFilter}
+            onMachineClick={handleMachineClick}
           />
         )}
       </div>

@@ -73,23 +73,29 @@ interface AlertPanelProps {
   machines: Machine[];
   activeSlice: string | null;
   onPieClick: (name: string | null, mode: DonutMode) => void;
+  /** Id da máquina atualmente filtrada pelo painel de críticos (null = sem filtro) */
+  activeMachineId: number | null;
+  /** Chamado ao clicar num item de alerta crítico — passa null para desfiltrar */
+  onMachineClick: (id: number | null) => void;
 }
 
 export default function AlertPanel({
   machines,
   activeSlice,
   onPieClick,
+  activeMachineId,
+  onMachineClick,
 }: AlertPanelProps): React.ReactElement {
-  const [mode, setMode]   = useState<DonutMode>('alertas');
-  const [page, setPage]   = useState<number>(0);
+  const [mode, setMode] = useState<DonutMode>('alertas');
+  const [page, setPage] = useState<number>(0);
 
   /* Apenas máquinas na categoria "alerta", ordenadas por nº de alertas desc */
   const criticals = machines
     .filter((m) => getStatusCategory(m.status) === 'alerta')
     .sort((a, b) => b.alertas.length - a.alertas.length);
 
-  const totalPages  = Math.ceil(criticals.length / PAGE_SIZE);
-  const paginated   = criticals.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const totalPages = Math.ceil(criticals.length / PAGE_SIZE);
+  const paginated  = criticals.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
   /* Dados do donut */
   const alertData: AlertChartEntry[] = countAlerts(machines);
@@ -110,6 +116,8 @@ export default function AlertPanel({
 
   const handleSliceClick = (entry: AlertChartEntry) => {
     const next = activeSlice === entry.name ? null : entry.name;
+    // Limpa o filtro por máquina ao filtrar pelo donut
+    if (next) onMachineClick(null);
     onPieClick(next, mode);
   };
 
@@ -120,6 +128,14 @@ export default function AlertPanel({
 
   const handlePrev = () => setPage((p) => Math.max(0, p - 1));
   const handleNext = () => setPage((p) => Math.min(totalPages - 1, p + 1));
+
+  /** Clique num item de alerta crítico: toggle — se já está ativo, remove o filtro */
+  const handleAlertItemClick = (m: Machine) => {
+    const next = activeMachineId === m.id ? null : m.id;
+    // Limpa o filtro de donut ao filtrar por máquina específica
+    if (next !== null) onPieClick(null, mode);
+    onMachineClick(next);
+  };
 
   return (
     <aside className={styles.panel}>
@@ -168,11 +184,18 @@ export default function AlertPanel({
             {paginated.map((m) => {
               const category    = getStatusCategory(m.status);
               const borderColor = CATEGORY_BORDER[category] ?? 'var(--kpi-danger)';
+              const isActive    = activeMachineId === m.id;
               return (
                 <li
                   key={m.id}
-                  className={styles.alertItem}
+                  className={`${styles.alertItem} ${isActive ? styles.alertItemActive : ''}`}
                   style={{ borderLeftColor: borderColor }}
+                  onClick={() => handleAlertItemClick(m)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAlertItemClick(m)}
+                  aria-pressed={isActive}
+                  title={isActive ? 'Clique para remover o filtro' : `Filtrar por ${m.codigo}`}
                 >
                   <div className={styles.alertMachine}>
                     <span className={styles.alertName}>{m.codigo}</span>

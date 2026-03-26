@@ -22,6 +22,7 @@ interface CardConfig {
   colorVar: string;
   bgVar: string;
   borderVar: string;
+  positiveIsUp?: boolean;
 }
 
 const CARDS: CardConfig[] = [
@@ -33,6 +34,7 @@ const CARDS: CardConfig[] = [
     colorVar:  '--kpi-ok',
     bgVar:     '--kpi-ok-bg',
     borderVar: '--kpi-ok-border',
+    positiveIsUp: true,
   },
   {
     key:       'alerta',
@@ -68,7 +70,7 @@ interface TrendProps {
   previous: number | null | undefined;
 }
 
-function Trend({ current, previous }: TrendProps): React.ReactElement | null {
+function Trend({ current, previous, positiveIsUp = false }: TrendProps & { positiveIsUp?: boolean }): React.ReactElement | null {
   if (previous === null || previous === undefined) return null;
 
   const diff = current - previous;
@@ -82,9 +84,10 @@ function Trend({ current, previous }: TrendProps): React.ReactElement | null {
     );
   }
 
-  const isUp = diff > 0;
+  const isUp   = diff > 0;
+  const isGood = positiveIsUp ? isUp : !isUp;
   return (
-    <span className={`${styles.trend} ${isUp ? styles.trendUp : styles.trendDown}`}>
+    <span className={`${styles.trend} ${isGood ? styles.trendDown : styles.trendUp}`}>
       {isUp
         ? <TrendUp  size={11} weight="bold" />
         : <TrendDown size={11} weight="bold" />}
@@ -175,7 +178,7 @@ function KpiCard({
           </div>
           <span className={styles.pct}>{pct}%</span>
         </div>
-        <Trend current={value} previous={previousValue} />
+        <Trend current={value} previous={previousValue} positiveIsUp={config.positiveIsUp} />
       </div>
 
       <div className={styles.valueCenter}>
