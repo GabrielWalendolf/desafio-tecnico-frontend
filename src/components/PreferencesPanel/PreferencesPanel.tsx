@@ -36,26 +36,6 @@ function SettingRow({ icon: Icon, label, description, children }: SettingRowProp
   );
 }
 
-interface ToggleProps {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  ariaLabel: string;
-}
-
-function Toggle({ checked, onChange, ariaLabel }: ToggleProps): React.ReactElement {
-  return (
-    <button
-      role="switch"
-      aria-checked={checked}
-      aria-label={ariaLabel}
-      className={`${styles.toggle} ${checked ? styles.toggleOn : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span className={styles.toggleThumb} />
-    </button>
-  );
-}
-
 interface ThemeOption {
   value: 'light' | 'dark' | 'system';
   label: string;
@@ -159,29 +139,6 @@ export default function PreferencesPanel({ onClose }: PreferencesPanelProps): Re
                 Alterne entre o modo claro, escuro ou use a preferência do seu sistema operacional.
               </p>
               <ThemeSelector />
-            </div>
-          </section>
-
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>
-              <span className={styles.sectionDot} />
-              Notificações
-            </h3>
-            <div className={styles.settingsList}>
-              <SettingRow
-                icon={Bell}
-                label="Alertas críticos"
-                description="Notificar quando uma máquina entrar em estado de alerta"
-              >
-                <Toggle checked={true} onChange={() => {}} ariaLabel="Alertas críticos" />
-              </SettingRow>
-              <SettingRow
-                icon={Bell}
-                label="Resumo periódico"
-                description="Receber resumo do status a cada hora"
-              >
-                <Toggle checked={false} onChange={() => {}} ariaLabel="Resumo periódico" />
-              </SettingRow>
             </div>
           </section>
 
