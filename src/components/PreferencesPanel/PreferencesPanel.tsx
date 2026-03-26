@@ -3,7 +3,7 @@
  */
 import React, { useEffect, useRef, ReactNode } from 'react';
 import {
-  X, Sun, Moon, Monitor, PaintBrush, Bell, Globe, Info,
+  X, Sun, Moon, Monitor, PaintBrush, Globe, Info,
 } from '@phosphor-icons/react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { ThemeValue } from '../../types';
